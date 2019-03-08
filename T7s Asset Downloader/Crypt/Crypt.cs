@@ -12,7 +12,8 @@ namespace T7s_Enc_Decoder
     class Crypt
     {
         private static readonly byte[] privateKey = ConvertByte("3HGWxMZz6f2egL84");
-        private static readonly byte[] IndexKey = ConvertByte("777WiKiFOrEVeRii");
+        private static readonly byte[] IndexKey = ConvertByte("3HGWxMZz6f2egL84");
+        //private static readonly byte[] IndexKey = ConvertByte("777WiKiFOrEVeRii");
 
         public static byte[] ConvertByte(object data)
         {

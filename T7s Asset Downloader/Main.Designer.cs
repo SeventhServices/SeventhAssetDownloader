@@ -42,7 +42,6 @@
             this.label_NowRev = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.textBox_SeachFiles = new System.Windows.Forms.TextBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.button_ShowAdvance = new System.Windows.Forms.Button();
             this.downloadNotice = new System.Windows.Forms.Label();
@@ -52,9 +51,16 @@
             this.label_GetNew = new System.Windows.Forms.Label();
             this.button_ReloadAdvance = new System.Windows.Forms.Button();
             this.button_About = new System.Windows.Forms.Button();
+            this.label1 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
             this.groupBox3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox4.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // BottomToolStripPanel
@@ -202,15 +208,6 @@
             this.textBox_SeachFiles.TabIndex = 11;
             this.textBox_SeachFiles.TextChanged += new System.EventHandler(this.TextBox_SeachFiles_TextChanged);
             // 
-            // groupBox2
-            // 
-            this.groupBox2.Location = new System.Drawing.Point(19, 203);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(463, 205);
-            this.groupBox2.TabIndex = 15;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "文件说明";
-            // 
             // groupBox4
             // 
             this.groupBox4.BackColor = System.Drawing.Color.Transparent;
@@ -313,6 +310,65 @@
             this.button_About.Text = "使用说明";
             this.button_About.UseVisualStyleBackColor = false;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(25, 33);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(159, 20);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "一些必要的信息参考：";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(25, 65);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(414, 20);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "卡面文件：[ card_m_001] [card_chara]  [card_chara_face] ";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(25, 97);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(407, 20);
+            this.label3.TabIndex = 2;
+            this.label3.Text = "歌曲文件：[music_0001_01] [music_sub] [歌曲名_01.acb]";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(25, 128);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(421, 20);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "数据文件：[m_card.sql] [M0001_1.bin] [intimate_1794.txt]";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.label5);
+            this.groupBox2.Controls.Add(this.label4);
+            this.groupBox2.Controls.Add(this.label3);
+            this.groupBox2.Controls.Add(this.label2);
+            this.groupBox2.Controls.Add(this.label1);
+            this.groupBox2.Location = new System.Drawing.Point(19, 203);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(463, 205);
+            this.groupBox2.TabIndex = 15;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "文件说明";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(25, 159);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(159, 20);
+            this.label5.TabIndex = 17;
+            this.label5.Text = "其他文件：【待补充】";
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -340,6 +396,8 @@
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox4.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -361,7 +419,6 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TextBox textBox_SeachFiles;
         private System.Windows.Forms.CheckBox checkBox_AutoDecrypt;
-        private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Button button_ShowAdvance;
         private System.Windows.Forms.Label downloadNotice;
@@ -371,6 +428,12 @@
         private System.Windows.Forms.Label label_GetNew;
         private System.Windows.Forms.Button button_ReloadAdvance;
         private System.Windows.Forms.Button button_About;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label1;
     }
 }
 

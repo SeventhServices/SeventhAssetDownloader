@@ -347,14 +347,15 @@ namespace T7s_Asset_Downloader
             {
                 SetProgressInt(es.ProgressPercentage);
             };
-            Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First)?(Convert.ToInt32(Define.NowRev) + 1).ToString(): (Convert.ToInt32(Define.NowRev) - 1).ToString();
+            Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
             new JsonParse().SaveDLConfing(
                 new MakeRequest().MakePostRequest( Define.Id, Define.GetApiName(Define.APINAME_TYPE.result),ProcessMessageHander), true);
 
             Define.Rev = Define.UserRev = "001";
             new JsonParse().SaveUrlIndex(
                 new MakeRequest().MakePostRequest( Define.Id, Define.GetApiName(Define.APINAME_TYPE.result),ProcessMessageHander), true);
-
+            Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
+            ReloadNoticeLabels();
         }
 
         private void Button1_ReloadAdvance(object sender, EventArgs e)

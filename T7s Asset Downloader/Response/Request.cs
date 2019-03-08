@@ -164,7 +164,7 @@ namespace T7s_Asset_Downloader
 
                     HttpResponseMessage httpResponse = client.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
                         , httpContent).Result;
-
+                    httpResponse.EnsureSuccessStatusCode();
                     return await httpResponse.Content.ReadAsStringAsync();
                 }
             });
