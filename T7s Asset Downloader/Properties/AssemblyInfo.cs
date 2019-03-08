@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
-[assembly: AssemblyTitle("NanasGadgets")]
+[assembly: AssemblyTitle("T7s Asset Downloader")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("NanasGadgets")]
+[assembly: AssemblyProduct("T7s Asset Downloader")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // 如果此项目向 COM 公开，则下列 GUID 用于类型库的 ID
-[assembly: Guid("42128f65-eff7-4e4b-bc69-dc1c1c54cd82")]
+[assembly: Guid("1fcfc07f-d86e-4885-915d-47f08a9362b7")]
 
 // 程序集的版本信息由下列四个值组成: 
 //
