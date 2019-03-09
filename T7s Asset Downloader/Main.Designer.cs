@@ -43,6 +43,12 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.textBox_SeachFiles = new System.Windows.Forms.TextBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.button_ShowAdvance = new System.Windows.Forms.Button();
             this.downloadNotice = new System.Windows.Forms.Label();
             this.button_OpenDownloadPath = new System.Windows.Forms.Button();
@@ -51,12 +57,6 @@
             this.label_GetNew = new System.Windows.Forms.Label();
             this.button_ReloadAdvance = new System.Windows.Forms.Button();
             this.button_About = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label4 = new System.Windows.Forms.Label();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.label5 = new System.Windows.Forms.Label();
             this.groupBox3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox4.SuspendLayout();
@@ -221,6 +221,65 @@
             this.groupBox4.TabIndex = 16;
             this.groupBox4.TabStop = false;
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.label5);
+            this.groupBox2.Controls.Add(this.label4);
+            this.groupBox2.Controls.Add(this.label3);
+            this.groupBox2.Controls.Add(this.label2);
+            this.groupBox2.Controls.Add(this.label1);
+            this.groupBox2.Location = new System.Drawing.Point(19, 203);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(463, 205);
+            this.groupBox2.TabIndex = 15;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "文件说明";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(25, 159);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(159, 20);
+            this.label5.TabIndex = 17;
+            this.label5.Text = "其他文件：【待补充】";
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(25, 128);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(421, 20);
+            this.label4.TabIndex = 16;
+            this.label4.Text = "数据文件：[m_card.sql] [M0001_1.bin] [intimate_1794.txt]";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(25, 97);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(407, 20);
+            this.label3.TabIndex = 2;
+            this.label3.Text = "歌曲文件：[music_0001_01] [music_sub] [歌曲名_01.acb]";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(25, 65);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(414, 20);
+            this.label2.TabIndex = 1;
+            this.label2.Text = "卡面文件：[ card_m_001] [card_chara]  [card_chara_face] ";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(25, 33);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(159, 20);
+            this.label1.TabIndex = 0;
+            this.label1.Text = "一些必要的信息参考：";
+            // 
             // button_ShowAdvance
             // 
             this.button_ShowAdvance.BackColor = System.Drawing.SystemColors.Window;
@@ -295,7 +354,7 @@
             this.button_ReloadAdvance.TabIndex = 20;
             this.button_ReloadAdvance.Text = "刷新高级状态";
             this.button_ReloadAdvance.UseVisualStyleBackColor = false;
-            this.button_ReloadAdvance.Click += new System.EventHandler(this.Button1_ReloadAdvance);
+            this.button_ReloadAdvance.Click += new System.EventHandler(this.Button_ReloadAdvance);
             // 
             // button_About
             // 
@@ -309,65 +368,6 @@
             this.button_About.TabIndex = 21;
             this.button_About.Text = "使用说明";
             this.button_About.UseVisualStyleBackColor = false;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(25, 33);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(159, 20);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "一些必要的信息参考：";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(25, 65);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(414, 20);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "卡面文件：[ card_m_001] [card_chara]  [card_chara_face] ";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(25, 97);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(407, 20);
-            this.label3.TabIndex = 2;
-            this.label3.Text = "歌曲文件：[music_0001_01] [music_sub] [歌曲名_01.acb]";
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(25, 128);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(421, 20);
-            this.label4.TabIndex = 16;
-            this.label4.Text = "数据文件：[m_card.sql] [M0001_1.bin] [intimate_1794.txt]";
-            // 
-            // groupBox2
-            // 
-            this.groupBox2.Controls.Add(this.label5);
-            this.groupBox2.Controls.Add(this.label4);
-            this.groupBox2.Controls.Add(this.label3);
-            this.groupBox2.Controls.Add(this.label2);
-            this.groupBox2.Controls.Add(this.label1);
-            this.groupBox2.Location = new System.Drawing.Point(19, 203);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(463, 205);
-            this.groupBox2.TabIndex = 15;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "文件说明";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(25, 159);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(159, 20);
-            this.label5.TabIndex = 17;
-            this.label5.Text = "其他文件：【待补充】";
             // 
             // Main
             // 
@@ -389,7 +389,7 @@
             this.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "Main";
-            this.Text = "Form1";
+            this.Text = "T7s Asset Downloader a0.0.6";
             this.Load += new System.EventHandler(this.Main_Load);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();

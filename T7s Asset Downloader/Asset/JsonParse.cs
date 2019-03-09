@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using T7s_Enc_Decoder;
+using System.Threading;
 
 namespace T7s_Asset_Downloader
 {
@@ -34,6 +35,10 @@ namespace T7s_Asset_Downloader
         public List<FileUrl> FileUrls = new List<FileUrl>();
         public List<DownloadConfing> DownloadConfings = new List<DownloadConfing>();
 
+        private void OnGetComplete()
+        {
+            System.Windows.Forms.MessageBox.Show("获取完成", "Notice", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information, System.Windows.Forms.MessageBoxDefaultButton.Button1);
+        }
         public void AddFileUrl ( string name , string url , URL_TYPE uRL_TYPE)
         {
             FileUrls.Add(new FileUrl
@@ -43,7 +48,7 @@ namespace T7s_Asset_Downloader
                 URL_TYPE = uRL_TYPE
             });
         }
-
+        
         #region 
         public void SaveDLConfing(string path )
         {
@@ -134,9 +139,8 @@ namespace T7s_Asset_Downloader
                 streamWriter.Close();
             }
             DownloadConfings.Clear();
-            System.Windows.Forms.MessageBox.Show("获取完成", "Notice", System.Windows.Forms.MessageBoxButtons.OK);
-
-        }
+            OnGetComplete();
+    }
 
         public async void SaveUrlIndex(Task<string> data)
         {
@@ -154,7 +158,7 @@ namespace T7s_Asset_Downloader
                 streamWriter.Close();
             }
             FileUrls.Clear();
-            System.Windows.Forms.MessageBox.Show("获取完成","Notice",System.Windows.Forms.MessageBoxButtons.OK);
+            OnGetComplete();
         }
 
         public async void SaveDLConfing(Task<string> data , bool encrypt)
@@ -227,7 +231,8 @@ namespace T7s_Asset_Downloader
             File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
                 Define.GetIndexPath(), true);
             Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(),encrypt);
-            System.Windows.Forms.MessageBox.Show("获取完成", "Notice", System.Windows.Forms.MessageBoxButtons.OK);
+            Define.isGetNewComplete = true;
+            OnGetComplete();
         }
 
 

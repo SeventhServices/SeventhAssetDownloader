@@ -55,6 +55,7 @@ namespace T7s_Asset_Downloader
         private delegate void SetNotices( string notices , Label label );
         private delegate void SetProgress( int progress );
         private delegate void SetCallBack( object obj );
+        private delegate void SetEnabled( bool enabled, Button button);
         private string[] ListResult;
         private string[] ErrorList;
         
@@ -80,7 +81,6 @@ namespace T7s_Asset_Downloader
         private void Button_DownloadCheckFiles_Click(object sender, EventArgs e)
         {
             DownloadDoneList.Clear();
-            
             StartDownload(DOWNLOAD_TYPE.SeletFiles);
         }
         private async void StartDownload ( DOWNLOAD_TYPE DOWNLOAD_TYPE )
@@ -194,36 +194,57 @@ namespace T7s_Asset_Downloader
                 }
             }
         }
+        private void StartPost(bool index = false)
+        {
+            SetNoticesText("正在获取新版本数据 ...请稍等..." , downloadNotice);
+            JsonParse jsonParse = new JsonParse();
+            ProcessMessageHander.HttpReceiveProgress += (senders, es) =>
+            {
+                int num = es.ProgressPercentage;
+                SetProgressInt(num);
+            };
+            if (!index)
+            {
+                jsonParse.SaveDLConfing(
+                Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
+            }
+            else
+            { 
+                jsonParse.SaveUrlIndex(
+                Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
+            }
 
-        //private async void DownloadFiles(string fileName, int fileNameIndex, int totalCount, TaskScheduler scheduler, AUTO_DECRYPT AUTO_DECRYPT)
-        //{
-        //    Action<object> download = async (NowfileName) =>
-        //    {
-        //        string TempNowfileName = NowfileName.ToString();
-        //        SetNoticesText("正在下载 ... " + TempNowfileName + fileNameIndex + "/" + totalCount, downloadNotice);
-        //        processMessageHander.HttpReceiveProgress += (senders, es) =>
-        //        {
-        //            int num = es.ProgressPercentage;
-        //            SetProgressInt(num);
-        //        };
-        //        await new MakeRequest().MkaeGetRequest(Define.GetUrl(TempNowfileName), Define.GetFileSavePath(), TempNowfileName);
-        //        if (AUTO_DECRYPT == AUTO_DECRYPT.Auto)
-        //        {
-        //            if (Save.GetFileType(TempNowfileName) != ENC_TYPE.ERROR)
-        //            {
-        //                DecryptFiles.DecryptFile(Define.GetFileSavePath() + TempNowfileName);
-        //            }
-        //        }
-        //        DownloadDomeList.Add(NowfileName.ToString());
-        //    };
-        //    await Task.Factory.StartNew(download, fileName, CancellationToken.None, TaskCreationOptions.None, scheduler).ContinueWith((t, obj) =>
-        //    {
-        //        if (t.Status != TaskStatus.RanToCompletion)
-        //        {
-        //            DownloadFiles(fileName, fileNameIndex, totalCount, scheduler, Define.AUTO_DECRYPT);
-        //        }
-        //    }, fileName);
-        //}
+        }
+
+    //private async void DownloadFiles(string fileName, int fileNameIndex, int totalCount, TaskScheduler scheduler, AUTO_DECRYPT AUTO_DECRYPT)
+    //{
+    //    Action<object> download = async (NowfileName) =>
+    //    {
+    //        string TempNowfileName = NowfileName.ToString();
+    //        SetNoticesText("正在下载 ... " + TempNowfileName + fileNameIndex + "/" + totalCount, downloadNotice);
+    //        processMessageHander.HttpReceiveProgress += (senders, es) =>
+    //        {
+    //            int num = es.ProgressPercentage;
+    //            SetProgressInt(num);
+    //        };
+    //        await new MakeRequest().MkaeGetRequest(Define.GetUrl(TempNowfileName), Define.GetFileSavePath(), TempNowfileName);
+    //        if (AUTO_DECRYPT == AUTO_DECRYPT.Auto)
+    //        {
+    //            if (Save.GetFileType(TempNowfileName) != ENC_TYPE.ERROR)
+    //            {
+    //                DecryptFiles.DecryptFile(Define.GetFileSavePath() + TempNowfileName);
+    //            }
+    //        }
+    //        DownloadDomeList.Add(NowfileName.ToString());
+    //    };
+    //    await Task.Factory.StartNew(download, fileName, CancellationToken.None, TaskCreationOptions.None, scheduler).ContinueWith((t, obj) =>
+    //    {
+    //        if (t.Status != TaskStatus.RanToCompletion)
+    //        {
+    //            DownloadFiles(fileName, fileNameIndex, totalCount, scheduler, Define.AUTO_DECRYPT);
+    //        }
+    //    }, fileName);
+    //}
         private void SetNoticesText ( string notice ,Label label)
         {
             if (label.InvokeRequired)
@@ -236,7 +257,18 @@ namespace T7s_Asset_Downloader
                 label.Text = notice;
             }
         }
-
+        private void SetButtomEnabled(bool enabled, Button button)
+        {
+            if (button.InvokeRequired)
+            {
+                SetEnabled call = new SetEnabled(SetButtomEnabled);
+                Invoke(call, new object[] { enabled, button });
+            }
+            else
+            {
+                button.Enabled = enabled;
+            }
+        }
         private void SetProgressInt (int progress)
         {
             if (downloadProgressBar.InvokeRequired)
@@ -332,7 +364,7 @@ namespace T7s_Asset_Downloader
 
         private void ReloadNoticeLabels()
         {
-            label_NowRev.Text = (Define.NOW_STAUTUS != NOW_STAUTUS.First) ? "当前版本 : " +"r"+ Define.NowRev : "当前版本 : " + ">> 请获取最新版本";
+            SetNoticesText((Define.NOW_STAUTUS != NOW_STAUTUS.First) ? "当前版本 : " + "r" + Define.NowRev : "当前版本 : " + ">> 请获取最新版本", label_NowRev);
         }
 
         private void Button_ShowAdvance_Click(object sender, EventArgs e)
@@ -343,34 +375,40 @@ namespace T7s_Asset_Downloader
 
         private void Button_GetNew_Click(object sender, EventArgs e)
         {
-            ProcessMessageHander.HttpReceiveProgress += (senders, es) =>
+            Define.isGetNewComplete = false;
+            button_ReloadAdvance.Enabled = false;
+            button_GetNew.Enabled = false;
+            try
             {
-                SetProgressInt(es.ProgressPercentage);
-            };
-            Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
-            new JsonParse().SaveDLConfing(
-                new MakeRequest().MakePostRequest( Define.Id, Define.GetApiName(Define.APINAME_TYPE.result),ProcessMessageHander), true);
+                Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
+                StartPost();
 
-            Define.Rev = Define.UserRev = "001";
-            new JsonParse().SaveUrlIndex(
-                new MakeRequest().MakePostRequest( Define.Id, Define.GetApiName(Define.APINAME_TYPE.result),ProcessMessageHander), true);
-            Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
-            ReloadNoticeLabels();
+                Define.Rev = Define.UserRev = "001";
+                StartPost(true);
+
+            }
+            finally
+            {
+                Task.Run( () =>
+                {
+                    while (Define.isGetNewComplete == false) { };
+                    Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
+                    SetNoticesText(">> 就绪 ...", downloadNotice);
+                    ReloadNoticeLabels();
+                    SetButtomEnabled(true, button_GetNew);
+                    SetButtomEnabled(true, button_ReloadAdvance);
+                    _ini_listResult();
+                });
+            }
+
         }
 
-        private void Button1_ReloadAdvance(object sender, EventArgs e)
+        private void Button_ReloadAdvance(object sender, EventArgs e)
         {
             listBoxResult.Items.Clear();
-            if (File.Exists(Define.GetConfingPath()))
-            {
-                Define._ini_Coning();
-                ReloadNoticeLabels();
-                if (File.Exists(Define.GetAdvanceConfingPath()))
-                {
-                    _ini_listResult();
-                    button_LoadAllResult.Enabled = true;
-                }
-            }
+            Define._ini_Coning();
+            ReloadNoticeLabels();
+            _ini_listResult();
         }
 
 

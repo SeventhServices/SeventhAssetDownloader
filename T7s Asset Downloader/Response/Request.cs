@@ -11,7 +11,7 @@ using T7s_Enc_Decoder;
 using T7s_Sig_Counter;
 using System.Net.Http.Headers;
 using System.Net.Http.Handlers;
-
+using System.Threading;
 
 namespace T7s_Asset_Downloader
 {
@@ -108,11 +108,19 @@ namespace T7s_Asset_Downloader
         }
 
         private static HttpClient GetClient;
+        private static HttpClient PostClient;
+        //private static ManualResetEvent ManualResetEvent = new ManualResetEvent(true);
 
         public void HttpClientTest(ProgressMessageHandler progressMessageHandler)
         {
             GetClient = new HttpClient(progressMessageHandler){ BaseAddress = new Uri(Define.Domin)};
-
+            PostClient = new HttpClient(progressMessageHandler) { BaseAddress = new Uri(Define.BaseUrl) };
+            PostClient.DefaultRequestHeaders.Add("Expect", "100-continue");
+            PostClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
+            PostClient.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
+            PostClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
+            PostClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
+            PostClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
             Task.Run(() =>
             {
                 GetClient.SendAsync(new HttpRequestMessage
@@ -150,23 +158,10 @@ namespace T7s_Asset_Downloader
                     CharSet = "utf-8"
                 };
 
-                using (HttpClient client = new HttpClient
-                {
-                    BaseAddress = new Uri(Define.BaseUrl)
-                })
-                {
-                    client.DefaultRequestHeaders.Add("Expect", "100-continue");
-                    client.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
-                    client.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
-                    client.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
-                    client.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
-                    client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
-
-                    HttpResponseMessage httpResponse = client.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
-                        , httpContent).Result;
-                    httpResponse.EnsureSuccessStatusCode();
-                    return await httpResponse.Content.ReadAsStringAsync();
-                }
+                HttpResponseMessage httpResponse = PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                    , httpContent).Result;
+                httpResponse.EnsureSuccessStatusCode();
+                return await httpResponse.Content.ReadAsStringAsync();
             });
         }
         public async Task<string> MakePostRequest ( string id, string apiName, ProgressMessageHandler progressMessageHandler ,bool save = false )
@@ -194,7 +189,8 @@ namespace T7s_Asset_Downloader
 
                     HttpResponseMessage httpResponse = client.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
                         , httpContent).Result;
-
+                    httpResponse.EnsureSuccessStatusCode();
+                    //ManualResetEvent.WaitOne(100);
                     return await httpResponse.Content.ReadAsStringAsync();
                 }
 

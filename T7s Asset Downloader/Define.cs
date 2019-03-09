@@ -28,7 +28,9 @@ namespace T7s_Asset_Downloader
         public static AUTO_DECRYPT AUTO_DECRYPT = AUTO_DECRYPT.Auto;
         public static int DefaultShowCount = 20;
         public static int MaxDownloadTasks = 5;
-        public static int DownloadTaskSleep = 300; 
+        public static int DownloadTaskSleep = 300;
+
+        public static bool isGetNewComplete;
         public static void _ini_Coning()
         {
             DownloadPath = jsonParse.DownloadConfings.Select(p => p.DownloadPath).ToArray()[0];
