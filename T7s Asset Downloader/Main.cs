@@ -1,15 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using T7s_Enc_Decoder;
-using T7s_Sig_Counter;
 using System.Net.Http;
 using System.Net.Http.Handlers;
 using System.Threading;
@@ -17,7 +13,7 @@ using System.Threading.Tasks.Schedulers;
 
 namespace T7s_Asset_Downloader
 {
-    
+
     public partial class Main : Form
     {
         public Main()
@@ -49,15 +45,15 @@ namespace T7s_Asset_Downloader
             }
             ReloadNoticeLabels();
             MakeRequest Request = new MakeRequest();
-            Request.HttpClientTest(ProcessMessageHander);
+            Request.HttpClientTest(DownloadProcessMessageHander);
         }
-        private ProgressMessageHandler ProcessMessageHander = new ProgressMessageHandler(new HttpClientHandler());
+        private ProgressMessageHandler DownloadProcessMessageHander = new ProgressMessageHandler(new HttpClientHandler());
+        private ProgressMessageHandler PostProcessMessageHander = new ProgressMessageHandler(new HttpClientHandler());
         private delegate void SetNotices( string notices , Label label );
         private delegate void SetProgress( int progress );
         private delegate void SetCallBack( object obj );
         private delegate void SetEnabled( bool enabled, Button button);
         private string[] ListResult;
-        private string[] ErrorList;
         
         private bool isSevealFiles = true;
         private MakeRequest Request = new MakeRequest();
@@ -178,7 +174,7 @@ namespace T7s_Asset_Downloader
             SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + totalCount, downloadNotice);
             if (isSevealFiles)
             {
-                ProcessMessageHander.HttpReceiveProgress += (senders, es) =>
+                DownloadProcessMessageHander.HttpReceiveProgress += (senders, es) =>
                 {
                     int num = es.ProgressPercentage;
                     SetProgressInt(num);
@@ -198,7 +194,7 @@ namespace T7s_Asset_Downloader
         {
             SetNoticesText("正在获取新版本数据 ...请稍等..." , downloadNotice);
             JsonParse jsonParse = new JsonParse();
-            ProcessMessageHander.HttpReceiveProgress += (senders, es) =>
+            PostProcessMessageHander.HttpSendProgress += (senders, es) =>
             {
                 int num = es.ProgressPercentage;
                 SetProgressInt(num);
@@ -209,7 +205,7 @@ namespace T7s_Asset_Downloader
                 Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
             }
             else
-            { 
+            {
                 jsonParse.SaveUrlIndex(
                 Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
             }
@@ -373,23 +369,29 @@ namespace T7s_Asset_Downloader
             Advance.Show();
         }
 
-        private void Button_GetNew_Click(object sender, EventArgs e)
+        private async void Button_GetNew_Click(object sender, EventArgs e)
         {
+            Request._ini_PostClient(PostProcessMessageHander);
             Define.isGetNewComplete = false;
             button_ReloadAdvance.Enabled = false;
             button_GetNew.Enabled = false;
             try
             {
-                Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
-                StartPost();
-
-                Define.Rev = Define.UserRev = "001";
-                StartPost(true);
+                await Task.Run( () =>
+                {
+                    Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
+                    StartPost();
+                });
+                await Task.Run(() =>
+                {
+                    Define.Rev = Define.UserRev = "001";
+                    StartPost(true);
+                });
 
             }
             finally
             {
-                Task.Run( () =>
+                await Task.Run( () =>
                 {
                     while (Define.isGetNewComplete == false) { };
                     Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
@@ -424,6 +426,38 @@ namespace T7s_Asset_Downloader
                 };
             });
         }
-           
+
+        private void Button_About_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Button_GetDiffList_Click(object sender, EventArgs e)
+        {
+            string[] NamesList1 = null, NamesList2 = null;
+
+            JsonParse jsonParse = new JsonParse();
+            OpenFileDialog ofd = new OpenFileDialog
+            {
+                Title = "选择要打开的文件",
+                Filter = "加密索引文件|Index.json",
+                RestoreDirectory = true
+            };
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                jsonParse.LoadUrlIndex(ofd.FileName, true);
+                NamesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+            }
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                jsonParse.LoadUrlIndex(ofd.FileName, true);
+                NamesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+            }
+
+            Define.DiifList = NamesList1.Except(NamesList2).ToArray();
+            ListResult = Define.DiifList;
+            listBoxResult.Items.Clear();
+            ShowlistResult(Define.DiifList, Define.DiifList.Length);
+        }
     }
 }

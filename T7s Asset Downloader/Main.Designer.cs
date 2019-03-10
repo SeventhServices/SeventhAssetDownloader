@@ -57,6 +57,7 @@
             this.label_GetNew = new System.Windows.Forms.Label();
             this.button_ReloadAdvance = new System.Windows.Forms.Button();
             this.button_About = new System.Windows.Forms.Button();
+            this.button_GetDiffList = new System.Windows.Forms.Button();
             this.groupBox3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox4.SuspendLayout();
@@ -325,7 +326,7 @@
             // 
             this.button_GetNew.BackColor = System.Drawing.SystemColors.Window;
             this.button_GetNew.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button_GetNew.Location = new System.Drawing.Point(636, 9);
+            this.button_GetNew.Location = new System.Drawing.Point(644, 9);
             this.button_GetNew.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button_GetNew.Name = "button_GetNew";
             this.button_GetNew.Size = new System.Drawing.Size(128, 32);
@@ -347,7 +348,7 @@
             // 
             this.button_ReloadAdvance.BackColor = System.Drawing.SystemColors.Window;
             this.button_ReloadAdvance.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button_ReloadAdvance.Location = new System.Drawing.Point(475, 9);
+            this.button_ReloadAdvance.Location = new System.Drawing.Point(495, 9);
             this.button_ReloadAdvance.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button_ReloadAdvance.Name = "button_ReloadAdvance";
             this.button_ReloadAdvance.Size = new System.Drawing.Size(128, 32);
@@ -361,13 +362,27 @@
             this.button_About.BackColor = System.Drawing.SystemColors.Window;
             this.button_About.Enabled = false;
             this.button_About.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button_About.Location = new System.Drawing.Point(312, 9);
+            this.button_About.Location = new System.Drawing.Point(195, 9);
             this.button_About.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button_About.Name = "button_About";
             this.button_About.Size = new System.Drawing.Size(128, 32);
             this.button_About.TabIndex = 21;
             this.button_About.Text = "使用说明";
             this.button_About.UseVisualStyleBackColor = false;
+            this.button_About.Click += new System.EventHandler(this.Button_About_Click);
+            // 
+            // button_GetDiffList
+            // 
+            this.button_GetDiffList.BackColor = System.Drawing.SystemColors.Window;
+            this.button_GetDiffList.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button_GetDiffList.Location = new System.Drawing.Point(346, 9);
+            this.button_GetDiffList.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.button_GetDiffList.Name = "button_GetDiffList";
+            this.button_GetDiffList.Size = new System.Drawing.Size(128, 32);
+            this.button_GetDiffList.TabIndex = 22;
+            this.button_GetDiffList.Text = "对照差异";
+            this.button_GetDiffList.UseVisualStyleBackColor = false;
+            this.button_GetDiffList.Click += new System.EventHandler(this.Button_GetDiffList_Click);
             // 
             // Main
             // 
@@ -376,6 +391,7 @@
             this.BackColor = System.Drawing.SystemColors.Window;
             this.BackgroundImage = global::T7s_Asset_Downloader.Properties.Resources.bg1;
             this.ClientSize = new System.Drawing.Size(895, 577);
+            this.Controls.Add(this.button_GetDiffList);
             this.Controls.Add(this.button_About);
             this.Controls.Add(this.button_ReloadAdvance);
             this.Controls.Add(this.label_GetNew);
@@ -389,7 +405,7 @@
             this.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "Main";
-            this.Text = "T7s Asset Downloader a0.0.6";
+            this.Text = "T7s Asset Downloader a0.0.7";
             this.Load += new System.EventHandler(this.Main_Load);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
@@ -434,6 +450,7 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button button_GetDiffList;
     }
 }
 

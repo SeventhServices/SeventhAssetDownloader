@@ -10,7 +10,7 @@ using System.Windows.Forms;
 
 namespace T7s_Asset_Downloader
 {
-    public partial class Advance : Form
+    public partial class Advance : Form 
     {
         public Advance()
         {
@@ -62,5 +62,20 @@ namespace T7s_Asset_Downloader
         private void Advance_Load(object sender, EventArgs e)
         {
         }
+
+
+    }
+
+    partial class Main :Form
+    {
+        private void Button3_Click(object sender, EventArgs e)
+        {
+            listBoxResult.Items.Clear();
+            ShowlistResult(Define.DiifList, Define.DiifList.Length);
+        }
+
+
+
+
     }
 }

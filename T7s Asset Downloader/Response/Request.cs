@@ -114,13 +114,9 @@ namespace T7s_Asset_Downloader
         public void HttpClientTest(ProgressMessageHandler progressMessageHandler)
         {
             GetClient = new HttpClient(progressMessageHandler){ BaseAddress = new Uri(Define.Domin)};
-            PostClient = new HttpClient(progressMessageHandler) { BaseAddress = new Uri(Define.BaseUrl) };
-            PostClient.DefaultRequestHeaders.Add("Expect", "100-continue");
-            PostClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
-            PostClient.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
-            PostClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
-            PostClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
-            PostClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+            GetClient.Timeout = new TimeSpan(0, 0, 10);
+
+
             Task.Run(() =>
             {
                 GetClient.SendAsync(new HttpRequestMessage
@@ -132,37 +128,62 @@ namespace T7s_Asset_Downloader
 
         }
 
+        public void _ini_PostClient (ProgressMessageHandler progressMessageHandler)
+        {
+            PostClient = new HttpClient(progressMessageHandler) { BaseAddress = new Uri(Define.BaseUrl) };
+            PostClient.Timeout = new TimeSpan(0, 10, 0);
+
+            PostClient.DefaultRequestHeaders.Add("Expect", "100-continue");
+            PostClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
+            PostClient.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
+            PostClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
+            PostClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
+            PostClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+
+        }
+        
+
         public async Task<string> MkaeGetRequest(string getUrl, string savePath , string fileName)
         {
             HttpResponseMessage response = await GetClient.GetAsync( getUrl );
-            //string StatusCode = response.StatusCode.ToString();
-            //Define.TEST.Add(StatusCode);
-            response.EnsureSuccessStatusCode();
-            byte[] FileBytes = response.Content.ReadAsByteArrayAsync().Result;
-            
-            using (FileStream fileStream = File.OpenWrite( savePath + fileName ))
+
+            if (response.IsSuccessStatusCode)
             {
-                fileStream.Write(FileBytes, 0, FileBytes.Length);
-                fileStream.Close();
+                byte[] FileBytes = response.Content.ReadAsByteArrayAsync().Result;
+
+                using (FileStream fileStream = File.OpenWrite(savePath + fileName))
+                {
+                    fileStream.Write(FileBytes, 0, FileBytes.Length);
+                    fileStream.Close();
+                }
             }
+            else
+            {
+                response.EnsureSuccessStatusCode();
+                MessageBox.Show("文件不存在");
+            }
+            
+
             return fileName;
         }
         public async Task<string> MakePostRequest(string id, string apiName, bool save = false)
         {
-            return await Task.Run(async () => {
-                MakeParams makeParams = new MakeParams();
-                makeParams.AddSignatureParam(id, apiName);
-                HttpContent httpContent = new StringContent(MakeParams.GetParam());
-                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
-                {
-                    CharSet = "utf-8"
-                };
+            MakeParams makeParams = new MakeParams();
+            makeParams.AddSignatureParam(id, apiName);
+            HttpContent httpContent = new StringContent(MakeParams.GetParam());
+            httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
+            {
+                CharSet = "utf-8"
+            };
 
-                HttpResponseMessage httpResponse = PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
-                    , httpContent).Result;
-                httpResponse.EnsureSuccessStatusCode();
-                return await httpResponse.Content.ReadAsStringAsync();
-            });
+            HttpResponseMessage Response = PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                , httpContent).Result;
+            if (!Response.IsSuccessStatusCode)
+            {
+                Response.EnsureSuccessStatusCode();
+                MessageBox.Show("请求超时");
+            }
+            return await Response.Content.ReadAsStringAsync();
         }
         public async Task<string> MakePostRequest ( string id, string apiName, ProgressMessageHandler progressMessageHandler ,bool save = false )
         {

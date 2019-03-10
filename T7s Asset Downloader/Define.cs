@@ -30,6 +30,8 @@ namespace T7s_Asset_Downloader
         public static int MaxDownloadTasks = 5;
         public static int DownloadTaskSleep = 300;
 
+        public static string[] DiifList;
+
         public static bool isGetNewComplete;
         public static void _ini_Coning()
         {

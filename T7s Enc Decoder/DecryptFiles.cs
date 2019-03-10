@@ -26,7 +26,7 @@ namespace T7s_Enc_Decoder
                 case ENC_TYPE.TXTorSQLorJSON :
                     using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(FilePath)))
                     {
-                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath), true);
+                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath),true);
                         string FileText = Encoding.UTF8.GetString(FileBytes);
                         streamWriter.Write(FileText);
                         streamWriter.Close();
