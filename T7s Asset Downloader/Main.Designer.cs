@@ -58,6 +58,7 @@
             this.button_ReloadAdvance = new System.Windows.Forms.Button();
             this.button_About = new System.Windows.Forms.Button();
             this.button_GetDiffList = new System.Windows.Forms.Button();
+            this.button_DownloadCancel = new System.Windows.Forms.Button();
             this.groupBox3.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox4.SuspendLayout();
@@ -384,6 +385,20 @@
             this.button_GetDiffList.UseVisualStyleBackColor = false;
             this.button_GetDiffList.Click += new System.EventHandler(this.Button_GetDiffList_Click);
             // 
+            // button_DownloadCancel
+            // 
+            this.button_DownloadCancel.BackColor = System.Drawing.SystemColors.Window;
+            this.button_DownloadCancel.Enabled = false;
+            this.button_DownloadCancel.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button_DownloadCancel.Location = new System.Drawing.Point(581, 527);
+            this.button_DownloadCancel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.button_DownloadCancel.Name = "button_DownloadCancel";
+            this.button_DownloadCancel.Size = new System.Drawing.Size(135, 37);
+            this.button_DownloadCancel.TabIndex = 23;
+            this.button_DownloadCancel.Text = "取消下载";
+            this.button_DownloadCancel.UseVisualStyleBackColor = false;
+            this.button_DownloadCancel.Visible = false;
+            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
@@ -391,6 +406,7 @@
             this.BackColor = System.Drawing.SystemColors.Window;
             this.BackgroundImage = global::T7s_Asset_Downloader.Properties.Resources.bg1;
             this.ClientSize = new System.Drawing.Size(895, 577);
+            this.Controls.Add(this.button_DownloadCancel);
             this.Controls.Add(this.button_GetDiffList);
             this.Controls.Add(this.button_About);
             this.Controls.Add(this.button_ReloadAdvance);
@@ -451,6 +467,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button button_GetDiffList;
+        private System.Windows.Forms.Button button_DownloadCancel;
     }
 }
 

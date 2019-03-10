@@ -41,6 +41,14 @@ namespace T7s_Enc_Decoder
                         streamWriter.Close();
                     }
                     break;
+                case ENC_TYPE.UNKONWN:
+                    using (FileStream fileStream = File.OpenWrite(Save.GetSavePath(FilePath)))
+                    {
+                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath));
+                        fileStream.Write(FileBytes, 0, FileBytes.Length);
+                        fileStream.Close();
+                    }
+                    break;
                 case ENC_TYPE.ERROR:
                     System.Windows.Forms.MessageBox.Show("无法识别");
                     break;
@@ -81,9 +89,16 @@ namespace T7s_Enc_Decoder
             }
             else
             {
+                //if (Equals(FileType.Last(), "acb"))
+                //{
+
+                //}
+                if (Equals( FileType.Last(),"enc"))
+                {
+                    return ENC_TYPE.UNKONWN;
+                }
                 return ENC_TYPE.ERROR;
             }
-
         }
 
 
@@ -106,6 +121,14 @@ namespace T7s_Enc_Decoder
         /// 其他文件（BIN）
         /// </summary>
         BIN,
+        /// <summary>
+        /// 音频文件（ACB）
+        /// </summary>
+        ACB,
+        /// <summary>
+        /// 未知加密
+        /// </summary>
+        UNKONWN,
         /// <summary>
         /// 无法识别
         /// </summary>

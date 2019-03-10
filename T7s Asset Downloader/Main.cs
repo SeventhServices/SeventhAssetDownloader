@@ -87,6 +87,8 @@ namespace T7s_Asset_Downloader
             }
             SetProgressInt(0);
 
+            button_DownloadCancel.Visible = true;
+
             string[] WillDownloadList;
             int TotalCount;
 
@@ -101,6 +103,7 @@ namespace T7s_Asset_Downloader
                     if (TotalCount < 1)
                     {
                         MessageBox.Show("未选择要下载的文件，请点击选择某项或多项文件，再开始下载。", "Notice");
+                        button_DownloadCancel.Visible = false;
                         return;
                     }
                     var CheckedNameList = new string[TotalCount];
@@ -166,6 +169,8 @@ namespace T7s_Asset_Downloader
             {
                 SetNoticesText("下载完成 >> 共 " + TotalCount + " 个文件 ! !", downloadNotice);
                 var ErrorList = WillDownloadList.Except(DownloadDoneList.ToArray());
+
+                button_DownloadCancel.Visible = false;
             }
 
 }
@@ -437,6 +442,7 @@ namespace T7s_Asset_Downloader
             string[] NamesList1 = null, NamesList2 = null;
 
             JsonParse jsonParse = new JsonParse();
+
             OpenFileDialog ofd = new OpenFileDialog
             {
                 Title = "选择要打开的文件",
@@ -447,17 +453,31 @@ namespace T7s_Asset_Downloader
             {
                 jsonParse.LoadUrlIndex(ofd.FileName, true);
                 NamesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    jsonParse.LoadUrlIndex(ofd.FileName, true);
+                    NamesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                }
+                else
+                {
+                    return;
+                }
             }
-            if (ofd.ShowDialog() == DialogResult.OK)
+            else
             {
-                jsonParse.LoadUrlIndex(ofd.FileName, true);
-                NamesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                return;
             }
 
-            Define.DiifList = NamesList1.Except(NamesList2).ToArray();
-            ListResult = Define.DiifList;
-            listBoxResult.Items.Clear();
-            ShowlistResult(Define.DiifList, Define.DiifList.Length);
+            if (NamesList1 != null)
+            {
+                Define.DiifList = NamesList1.Except(NamesList2).ToArray();
+                NamesList1 = NamesList2 = null;
+                ListResult = Define.DiifList;
+                listBoxResult.Items.Clear();
+                ShowlistResult(Define.DiifList, Define.DiifList.Length);
+            }
+
         }
+
     }
 }
