@@ -56,12 +56,11 @@ namespace T7s_Asset_Downloader
         private delegate void SetCallBack( object obj );
         private delegate void SetEnabled( bool enabled, Button button);
         private string[] ListResult;
-        
         private bool isSevealFiles = true;
+        private List<string> DownloadDoneList = new List<string>();
         private MakeRequest Request = new MakeRequest();
-        
-        private List<string> DownloadDoneList = new  List<string>();
 
+        #region UI逻辑
         private void Button_DownloadAllFiles_Click(object sender, EventArgs e)
         {
             DownloadDoneList.Clear();
@@ -81,18 +80,239 @@ namespace T7s_Asset_Downloader
             DownloadDoneList.Clear();
             StartDownload(DOWNLOAD_TYPE.SeletFiles);
         }
+        private void Button_OpenDownloadPath_Click(object sender, EventArgs e)
+        {
+            if (!Directory.Exists(Define.GetFileSavePath()))
+            {
+                Directory.CreateDirectory(Define.GetFileSavePath());
+            }
+            System.Diagnostics.Process.Start("Explorer.exe", Define.GetFileSavePath());
+        }
+
+        private void Button_LoadAllResult_Click(object sender, EventArgs e)
+        {
+            if (ListResult == null)
+            {
+                ListResult = Define.GetDefaultNameList();
+            }
+            ShowlistResult(ListResult, Define.DefaultShowCount, ListResult.Length);
+            button_LoadAllResult.Enabled = false;
+        }
+
+        private void TextBox_SeachFiles_TextChanged(object sender, EventArgs e)
+        {
+            listBoxResult.Items.Clear();
+            ListResult = Define.GetListResult(textBox_SeachFiles.Text);
+            if (!(ListResult.Length > Define.DefaultShowCount))
+            {
+                ShowlistResult(ListResult, ListResult.Length);
+            }
+            else
+            {
+                ShowlistResult(ListResult, Define.DefaultShowCount);
+            }
+            button_LoadAllResult.Enabled = !button_LoadAllResult.Enabled ? true : true;
+        }
+        private void Button_ShowAdvance_Click(object sender, EventArgs e)
+        {
+            Advance Advance = new Advance();
+            Advance.Show();
+        }
+
+        private async void Button_GetNew_Click(object sender, EventArgs e)
+        {
+            Request._ini_PostClient(PostProcessMessageHander);
+            Define.isGetNewComplete = false;
+            button_ReloadAdvance.Enabled = false;
+            button_GetNew.Enabled = false;
+            try
+            {
+                await Task.Run(() =>
+                {
+                    Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
+                    StartPost();
+                });
+                await Task.Run(() =>
+                {
+                    Define.Rev = Define.UserRev = "001";
+                    StartPost(true);
+                });
+
+            }
+            finally
+            {
+                await Task.Run(() =>
+                {
+                    while (Define.isGetNewComplete == false) { };
+                    Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
+                    SetNoticesText(">> 就绪 ...", downloadNotice);
+                    ReloadNoticeLabels();
+                    SetButtomEnabled(true, button_GetNew);
+                    SetButtomEnabled(true, button_ReloadAdvance);
+                    _ini_listResult();
+                });
+            }
+
+        }
+
+        private void Button_ReloadAdvance(object sender, EventArgs e)
+        {
+            listBoxResult.Items.Clear();
+            Define._ini_Coning();
+            ReloadNoticeLabels();
+            _ini_listResult();
+        }
+
+        private void Button_About_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Button_GetDiffList_Click(object sender, EventArgs e)
+        {
+            string[] NamesList1 = null, NamesList2 = null;
+
+            JsonParse jsonParse = new JsonParse();
+
+            OpenFileDialog ofd = new OpenFileDialog
+            {
+                Title = "选择要打开的文件",
+                Filter = "加密索引文件|Index.json",
+                RestoreDirectory = true
+            };
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                jsonParse.LoadUrlIndex(ofd.FileName, true);
+                NamesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    jsonParse.LoadUrlIndex(ofd.FileName, true);
+                    NamesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                return;
+            }
+
+            if (NamesList1 != null)
+            {
+                Define.DiifList = NamesList1.Except(NamesList2).ToArray();
+                NamesList1 = NamesList2 = null;
+                ListResult = Define.DiifList;
+                listBoxResult.Items.Clear();
+                ShowlistResult(Define.DiifList, Define.DiifList.Length);
+            }
+        }
+        #endregion
+
+        #region 委托修改UI
+
+        public void AddListResult(Object item)
+        {
+            listBoxResult.Items.Add(item);
+        }
+
+        private void SetNoticesText(string notice, Label label)
+        {
+            if (label.InvokeRequired)
+            {
+                SetNotices call = new SetNotices(SetNoticesText);
+                Invoke(call, new object[] { notice, label });
+            }
+            else
+            {
+                label.Text = notice;
+            }
+        }
+
+        private void SetButtomEnabled(bool enabled, Button button)
+        {
+            if (button.InvokeRequired)
+            {
+                SetEnabled call = new SetEnabled(SetButtomEnabled);
+                Invoke(call, new object[] { enabled, button });
+            }
+            else
+            {
+                button.Enabled = enabled;
+            }
+        }
+
+        private void SetProgressInt(int progress)
+        {
+            if (downloadProgressBar.InvokeRequired)
+            {
+                SetProgress call = new SetProgress(SetProgressInt);
+                Invoke(call, new object[] { progress });
+            }
+            else
+            {
+                downloadProgressBar.Value = progress;
+            }
+        }
+
+        private void SetlistResult(object item)
+        {
+            if (listBoxResult.InvokeRequired)
+            {
+                SetCallBack call = new SetCallBack(SetlistResult);
+                Invoke(call, new object[] { item });
+            }
+            else
+            {
+                AddListResult(item);
+            }
+        }
+        #endregion
+
+        /// <summary>
+        /// Initialize default the list will show into the listbox.
+        /// </summary>
+        public void _ini_listResult()
+        {
+            ListResult = Define.GetDefaultNameList();
+            ShowlistResult(Define.GetDefaultNameList(), Define.DefaultShowCount);
+        }
+        private void ReloadNoticeLabels()
+        {
+            SetNoticesText((Define.NOW_STAUTUS != NOW_STAUTUS.First) ? "当前版本 : " + "r" + Define.NowRev : "当前版本 : " + ">> 请获取最新版本", label_NowRev);
+        }
+        private void ReloadProcess(int TotalCount)
+        {
+            Task.Run(() =>
+            {
+                int NowProcess = (DownloadDoneList.Count / TotalCount) * 100;
+                SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + TotalCount, downloadNotice);
+                if (!isSevealFiles)
+                {
+                    SetProgressInt(NowProcess);
+                };
+            });
+        }
+
+        /// <summary>
+        /// Main control download method. 
+        /// </summary>
+        /// <param name="DOWNLOAD_TYPE">下载类型:少量下载或大量下载</param>
         private async void StartDownload ( DOWNLOAD_TYPE DOWNLOAD_TYPE )
         {
             if (!Directory.Exists(Define.GetFileSavePath()))
             {
                 Directory.CreateDirectory(Define.GetFileSavePath());
             }
-            SetProgressInt(0);
 
+            //Initialize the UI about download
+            SetProgressInt(0);
             button_DownloadCancel.Visible = true;
 
             string[] WillDownloadList;
             int TotalCount;
+            int NowFileIndex = 0;
 
             switch (DOWNLOAD_TYPE)
             {
@@ -120,8 +340,7 @@ namespace T7s_Asset_Downloader
                     WillDownloadList = ListResult;
                     break;
             }
-
-            int NowFileIndex = 0;
+            //Start Downlaod
             try
             {
                 var scheduler = new LimitedConcurrencyLevelTaskScheduler(Define.MaxDownloadTasks);
@@ -170,12 +389,20 @@ namespace T7s_Asset_Downloader
             finally
             {
                 SetNoticesText("下载完成 >> 共 " + TotalCount + " 个文件 ! !", downloadNotice);
-                var ErrorList = WillDownloadList.Except(DownloadDoneList.ToArray());
-
+                //var ErrorList = WillDownloadList.Except(DownloadDoneList.ToArray());
                 button_DownloadCancel.Visible = false;
             }
 
-}
+        }   
+
+        /// <summary>
+        /// Main Download method
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <param name="fileNameIndex"></param>
+        /// <param name="totalCount"></param>
+        /// <param name="AUTO_DECRYPT"></param>
+        /// <returns></returns>
         private async Task DownloadFiles(string fileName, int fileNameIndex, int totalCount, AUTO_DECRYPT AUTO_DECRYPT )
         {
             SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + totalCount, downloadNotice);
@@ -197,6 +424,11 @@ namespace T7s_Asset_Downloader
                 }
             }
         }
+
+        /// <summary>
+        /// Main post method
+        /// </summary>
+        /// <param name="index"></param>
         private void StartPost(bool index = false)
         {
             SetNoticesText("正在获取新版本数据 ...请稍等..." , downloadNotice);
@@ -219,79 +451,11 @@ namespace T7s_Asset_Downloader
 
         }
 
-    //private async void DownloadFiles(string fileName, int fileNameIndex, int totalCount, TaskScheduler scheduler, AUTO_DECRYPT AUTO_DECRYPT)
-    //{
-    //    Action<object> download = async (NowfileName) =>
-    //    {
-    //        string TempNowfileName = NowfileName.ToString();
-    //        SetNoticesText("正在下载 ... " + TempNowfileName + fileNameIndex + "/" + totalCount, downloadNotice);
-    //        processMessageHander.HttpReceiveProgress += (senders, es) =>
-    //        {
-    //            int num = es.ProgressPercentage;
-    //            SetProgressInt(num);
-    //        };
-    //        await new MakeRequest().MkaeGetRequest(Define.GetUrl(TempNowfileName), Define.GetFileSavePath(), TempNowfileName);
-    //        if (AUTO_DECRYPT == AUTO_DECRYPT.Auto)
-    //        {
-    //            if (Save.GetFileType(TempNowfileName) != ENC_TYPE.ERROR)
-    //            {
-    //                DecryptFiles.DecryptFile(Define.GetFileSavePath() + TempNowfileName);
-    //            }
-    //        }
-    //        DownloadDomeList.Add(NowfileName.ToString());
-    //    };
-    //    await Task.Factory.StartNew(download, fileName, CancellationToken.None, TaskCreationOptions.None, scheduler).ContinueWith((t, obj) =>
-    //    {
-    //        if (t.Status != TaskStatus.RanToCompletion)
-    //        {
-    //            DownloadFiles(fileName, fileNameIndex, totalCount, scheduler, Define.AUTO_DECRYPT);
-    //        }
-    //    }, fileName);
-    //}
-        private void SetNoticesText ( string notice ,Label label)
-        {
-            if (label.InvokeRequired)
-            {
-                SetNotices call = new SetNotices(SetNoticesText);
-                Invoke(call, new object[] { notice , label });
-            }
-            else
-            {
-                label.Text = notice;
-            }
-        }
-        private void SetButtomEnabled(bool enabled, Button button)
-        {
-            if (button.InvokeRequired)
-            {
-                SetEnabled call = new SetEnabled(SetButtomEnabled);
-                Invoke(call, new object[] { enabled, button });
-            }
-            else
-            {
-                button.Enabled = enabled;
-            }
-        }
-        private void SetProgressInt (int progress)
-        {
-            if (downloadProgressBar.InvokeRequired)
-            {
-                SetProgress call = new SetProgress(SetProgressInt); 
-                Invoke(call, new object[] { progress });
-            }
-            else
-            {
-                downloadProgressBar.Value = progress;
-            }
-        }
-
-
-        public void _ini_listResult()
-        {
-            ListResult = Define.GetDefaultNameList();
-            ShowlistResult(Define.GetDefaultNameList(), Define.DefaultShowCount);
-        }
-
+        /// <summary>
+        /// Show the list into listbox.
+        /// </summary>
+        /// <param name="nameList"></param>
+        /// <param name="showCount"></param>
         private void ShowlistResult( string[] nameList , int showCount )
         {
             Task.Run(() =>
@@ -303,183 +467,55 @@ namespace T7s_Asset_Downloader
             });
         }
 
-        private void ShowlistResult(string[] nameList, int startCount, int showCount)
+        /// <summary>
+        /// Show the list into listbox.
+        /// </summary>
+        /// <param name="nameList"></param>
+        /// <param name="startIndex"></param>
+        /// <param name="showCount"></param>
+        private void ShowlistResult(string[] nameList, int startIndex, int showCount)
         {
             Task.Run(() =>
             {
-                for (int i = startCount ; i < showCount; i++)
+                for (int i = startIndex ; i < showCount; i++)
                 {
                     SetlistResult(nameList[i]);
                 }
             });
         }
-        public void AddListResult( Object item )
-        {
-            listBoxResult.Items.Add( item );
-        }
 
-        private void SetlistResult(object item)
-        {
-            if (listBoxResult.InvokeRequired)
-            {
-                SetCallBack call = new SetCallBack(SetlistResult);
-                Invoke(call, new object[] { item });
-            }
-            else
-            {
-                AddListResult(item);
-            }
-        }
+        //test
 
-        private void Button_OpenDownloadPath_Click(object sender, EventArgs e)
-        {
-            if (!Directory.Exists(Define.GetFileSavePath()))
-            {
-                Directory.CreateDirectory(Define.GetFileSavePath());
-            }
-            System.Diagnostics.Process.Start("Explorer.exe", Define.GetFileSavePath());
-        }
-
-        private void Button_LoadAllResult_Click(object sender, EventArgs e)
-        {
-            if (ListResult == null)
-            {
-                ListResult = Define.GetDefaultNameList();
-            }
-            ShowlistResult(ListResult, Define.DefaultShowCount, ListResult.Length);
-            button_LoadAllResult.Enabled = false;
-        }
-
-        private void TextBox_SeachFiles_TextChanged(object sender, EventArgs e)
-        {
-            listBoxResult.Items.Clear();
-            ListResult = Define.GetListResult(textBox_SeachFiles.Text);
-            if (!(ListResult.Length > Define.DefaultShowCount))
-            {
-                ShowlistResult(ListResult, ListResult.Length);
-            }
-            else
-            {
-                ShowlistResult(ListResult, Define.DefaultShowCount);
-            }
-            button_LoadAllResult.Enabled = !button_LoadAllResult.Enabled ? true : true;
-        }
-
-        private void ReloadNoticeLabels()
-        {
-            SetNoticesText((Define.NOW_STAUTUS != NOW_STAUTUS.First) ? "当前版本 : " + "r" + Define.NowRev : "当前版本 : " + ">> 请获取最新版本", label_NowRev);
-        }
-
-        private void Button_ShowAdvance_Click(object sender, EventArgs e)
-        {
-            Advance Advance = new Advance();
-            Advance.Show();
-        }
-
-        private async void Button_GetNew_Click(object sender, EventArgs e)
-        {
-            Request._ini_PostClient(PostProcessMessageHander);
-            Define.isGetNewComplete = false;
-            button_ReloadAdvance.Enabled = false;
-            button_GetNew.Enabled = false;
-            try
-            {
-                await Task.Run( () =>
-                {
-                    Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
-                    StartPost();
-                });
-                await Task.Run(() =>
-                {
-                    Define.Rev = Define.UserRev = "001";
-                    StartPost(true);
-                });
-
-            }
-            finally
-            {
-                await Task.Run( () =>
-                {
-                    while (Define.isGetNewComplete == false) { };
-                    Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
-                    SetNoticesText(">> 就绪 ...", downloadNotice);
-                    ReloadNoticeLabels();
-                    SetButtomEnabled(true, button_GetNew);
-                    SetButtomEnabled(true, button_ReloadAdvance);
-                    _ini_listResult();
-                });
-            }
-
-        }
-
-        private void Button_ReloadAdvance(object sender, EventArgs e)
-        {
-            listBoxResult.Items.Clear();
-            Define._ini_Coning();
-            ReloadNoticeLabels();
-            _ini_listResult();
-        }
-
-
-        private void ReloadProcess ( int TotalCount )
-        {
-            Task.Run(() =>
-            {
-                int NowProcess = (DownloadDoneList.Count / TotalCount) * 100;
-                SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + TotalCount, downloadNotice);
-                if (!isSevealFiles)
-                {
-                    SetProgressInt(NowProcess);
-                };
-            });
-        }
-
-        private void Button_About_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void Button_GetDiffList_Click(object sender, EventArgs e)
-        {
-            string[] NamesList1 = null, NamesList2 = null;
-
-            JsonParse jsonParse = new JsonParse();
-
-            OpenFileDialog ofd = new OpenFileDialog
-            {
-                Title = "选择要打开的文件",
-                Filter = "加密索引文件|Index.json",
-                RestoreDirectory = true
-            };
-            if (ofd.ShowDialog() == DialogResult.OK)
-            {
-                jsonParse.LoadUrlIndex(ofd.FileName, true);
-                NamesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
-                if (ofd.ShowDialog() == DialogResult.OK)
-                {
-                    jsonParse.LoadUrlIndex(ofd.FileName, true);
-                    NamesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
-                }
-                else
-                {
-                    return;
-                }
-            }
-            else
-            {
-                return;
-            }
-
-            if (NamesList1 != null)
-            {
-                Define.DiifList = NamesList1.Except(NamesList2).ToArray();
-                NamesList1 = NamesList2 = null;
-                ListResult = Define.DiifList;
-                listBoxResult.Items.Clear();
-                ShowlistResult(Define.DiifList, Define.DiifList.Length);
-            }
-
-        }
-
+        //private async void DownloadFiles(string fileName, int fileNameIndex, int totalCount, TaskScheduler scheduler, AUTO_DECRYPT AUTO_DECRYPT)
+        //{
+        //    Action<object> download = async (NowfileName) =>
+        //    {
+        //        string TempNowfileName = NowfileName.ToString();
+        //        SetNoticesText("正在下载 ... " + TempNowfileName + fileNameIndex + "/" + totalCount, downloadNotice);
+        //        processMessageHander.HttpReceiveProgress += (senders, es) =>
+        //        {
+        //            int num = es.ProgressPercentage;
+        //            SetProgressInt(num);
+        //        };
+        //        await new MakeRequest().MkaeGetRequest(Define.GetUrl(TempNowfileName), Define.GetFileSavePath(), TempNowfileName);
+        //        if (AUTO_DECRYPT == AUTO_DECRYPT.Auto)
+        //        {
+        //            if (Save.GetFileType(TempNowfileName) != ENC_TYPE.ERROR)
+        //            {
+        //                DecryptFiles.DecryptFile(Define.GetFileSavePath() + TempNowfileName);
+        //            }
+        //        }
+        //        DownloadDomeList.Add(NowfileName.ToString());
+        //    };
+        //    await Task.Factory.StartNew(download, fileName, CancellationToken.None, TaskCreationOptions.None, scheduler).ContinueWith((t, obj) =>
+        //    {
+        //        if (t.Status != TaskStatus.RanToCompletion)
+        //        {
+        //            DownloadFiles(fileName, fileNameIndex, totalCount, scheduler, Define.AUTO_DECRYPT);
+        //        }
+        //    }, fileName);
+        //}
     }
+
+
 }

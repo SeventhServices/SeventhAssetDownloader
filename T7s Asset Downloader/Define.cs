@@ -22,17 +22,15 @@ namespace T7s_Asset_Downloader
 
         public static string DownloadPath;
         public static string NowRev;
-        public static List<string> TEST = new List<string>();
+        public static string[] DiifList;
 
         public static NOW_STAUTUS NOW_STAUTUS;
         public static AUTO_DECRYPT AUTO_DECRYPT = AUTO_DECRYPT.Auto;
         public static int DefaultShowCount = 20;
         public static int MaxDownloadTasks = 3;
         public static int DownloadTaskSleep = 300;
-
-        public static string[] DiifList;
-
         public static bool isGetNewComplete;
+
         public static void _ini_Coning()
         {
             DownloadPath = jsonParse.DownloadConfings.Select(p => p.DownloadPath).ToArray()[0];
@@ -85,7 +83,11 @@ namespace T7s_Asset_Downloader
             return jsonParse.DownloadConfings.Select(p => p.DownloadPath).ToString();
         }
 
-
+        /// <summary>
+        /// (临时)获取API完整名
+        /// </summary>
+        /// <param name="apiName">API类型</param>
+        /// <returns></returns>
         public static string GetApiName (APINAME_TYPE apiName)
         {
             switch (apiName)
