@@ -40,6 +40,8 @@ namespace T7s_Asset_Downloader
             }
             else
             {
+                button_ReloadAdvance.Enabled = false;
+
                 Define.NOW_STAUTUS = NOW_STAUTUS.NoneIndex;
                 Define.NOW_STAUTUS = NOW_STAUTUS.First;
             }
@@ -146,14 +148,14 @@ namespace T7s_Asset_Downloader
                 else
                 {
                     isSevealFiles = false;
-                    Define.DownloadTaskSleep = (TotalCount < 200) ? 0 : TotalCount / 3;
+                    Define.DownloadTaskSleep = (TotalCount < 200) ? 50 : (TotalCount > 1000) ? 500 :TotalCount / 3;
                     foreach (var fileName in WillDownloadList)
                     {
                         await DownloadTaskFactory.StartNew((Func<object, Task>)(async NowFileName =>
                         {
                             NowFileIndex++;
                             await DownloadFiles(fileName, NowFileIndex, TotalCount, AUTO_DECRYPT.Auto);
-                            Thread.Sleep((NowFileIndex % 50 == 0) ? 1000 : Define.DownloadTaskSleep);
+                            Thread.Sleep((NowFileIndex % 25 == 0) ? 500 : Define.DownloadTaskSleep);
                         }), fileName);
                     }
                     await Task.Run(() =>

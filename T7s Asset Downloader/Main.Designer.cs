@@ -298,7 +298,7 @@
             // downloadNotice
             // 
             this.downloadNotice.AutoSize = true;
-            this.downloadNotice.Location = new System.Drawing.Point(30, 547);
+            this.downloadNotice.Location = new System.Drawing.Point(27, 535);
             this.downloadNotice.Name = "downloadNotice";
             this.downloadNotice.Size = new System.Drawing.Size(0, 20);
             this.downloadNotice.TabIndex = 17;
@@ -405,7 +405,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Window;
             this.BackgroundImage = global::T7s_Asset_Downloader.Properties.Resources.bg1;
-            this.ClientSize = new System.Drawing.Size(895, 577);
+            this.ClientSize = new System.Drawing.Size(895, 575);
             this.Controls.Add(this.button_DownloadCancel);
             this.Controls.Add(this.button_GetDiffList);
             this.Controls.Add(this.button_About);

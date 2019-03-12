@@ -27,7 +27,7 @@ namespace T7s_Asset_Downloader
         public static NOW_STAUTUS NOW_STAUTUS;
         public static AUTO_DECRYPT AUTO_DECRYPT = AUTO_DECRYPT.Auto;
         public static int DefaultShowCount = 20;
-        public static int MaxDownloadTasks = 5;
+        public static int MaxDownloadTasks = 3;
         public static int DownloadTaskSleep = 300;
 
         public static string[] DiifList;
