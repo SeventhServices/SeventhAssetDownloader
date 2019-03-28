@@ -84,6 +84,8 @@
     <Compile Include="Crypt\DecryptFiles.cs" />
     <Compile Include="Define.cs" />
     <Compile Include="Asset\JsonParse.cs" />
+    <Compile Include="Extensions\Default.cs" />
+    <Compile Include="IGetUrl.cs" />
     <Compile Include="MainTest.cs">
       <SubType>Form</SubType>
     </Compile>

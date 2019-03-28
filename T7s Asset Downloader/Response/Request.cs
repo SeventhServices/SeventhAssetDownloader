@@ -139,7 +139,6 @@ namespace T7s_Asset_Downloader
             PostClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
             PostClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
             PostClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
-
         }
         
 

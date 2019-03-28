@@ -16,9 +16,10 @@ namespace T7s_Asset_Downloader
         public class FileUrl
         {
             public string Name { get; set; }
-            public string Url {  get; set; }
-            public URL_TYPE URL_TYPE {  get; set; }
+            public string Url { get; set; }
+            public URL_TYPE URL_TYPE { get; set; }
         }
+
         public class DownloadConfing
         {
             public string Revision { get; set; }
@@ -37,9 +38,11 @@ namespace T7s_Asset_Downloader
 
         private void OnGetComplete()
         {
-            System.Windows.Forms.MessageBox.Show("获取完成", "Notice", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Information, System.Windows.Forms.MessageBoxDefaultButton.Button1);
+            System.Windows.Forms.MessageBox.Show("获取完成", "Notice", System.Windows.Forms.MessageBoxButtons.OK,
+                System.Windows.Forms.MessageBoxIcon.Information, System.Windows.Forms.MessageBoxDefaultButton.Button1);
         }
-        public void AddFileUrl ( string name , string url , URL_TYPE uRL_TYPE)
+
+        public void AddFileUrl(string name, string url, URL_TYPE uRL_TYPE)
         {
             FileUrls.Add(new FileUrl
             {
@@ -48,21 +51,23 @@ namespace T7s_Asset_Downloader
                 URL_TYPE = uRL_TYPE
             });
         }
-        
-        #region 
-        public void SaveDLConfing(string path )
+
+        #region
+
+        public void SaveDlConfing(string path)
         {
             JObject jObject = ParseResultJson(path);
 
-            string BaseFileUrl = GetModify(path)[1].ToString();
-            string[] TempFileUrl = BaseFileUrl.Split('/');
+            string baseFileUrl = GetModify(path)[1].ToString();
+            string[] tempFileUrl = baseFileUrl.Split('/');
 
             StringBuilder downloadPath = new StringBuilder();
             for (int j = 0; j < 2; j++)
             {
-                downloadPath.Append(TempFileUrl[j]);
+                downloadPath.Append(tempFileUrl[j]);
                 downloadPath.Append("/");
             }
+
             DownloadConfings.Add(new DownloadConfing
             {
                 Revision = jObject["updateResource"]["revision"].ToString(),
@@ -74,12 +79,13 @@ namespace T7s_Asset_Downloader
                 ImageRev = jObject["updateResource"]["imageRev"].ToString(),
                 ImagePath = jObject["updateResource"]["imagePath"].ToString()
             });
-            string DownloadConfing = JsonConvert.SerializeObject(DownloadConfings);
-            using (StreamWriter streamWriter = new StreamWriter(Define.LocalPath + @"\Asset\Index\" + "DownloadConfing.json"))
+            string downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
+            using (StreamWriter streamWriter =
+                new StreamWriter(Define.LocalPath + @"\Asset\Index\" + "DownloadConfing.json"))
             {
                 //byte[] FileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(UrlIndex) ,true);
                 //string FileText = Encoding.UTF8.GetString(FileBytes);
-                streamWriter.Write(DownloadConfing);
+                streamWriter.Write(downloadConfing);
                 streamWriter.Close();
             }
         }
@@ -90,20 +96,21 @@ namespace T7s_Asset_Downloader
             {
                 Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index");
             }
+
             ParseModify(path);
             ParseModify(path, true);
-            string UrlIndex = JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+            var urlIndex =
+                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
             using (StreamWriter streamWriter = new StreamWriter(Define.LocalPath + @"\Asset\Index\" + "Index.json"))
             {
-
                 //byte[] FileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(UrlIndex) ,true);
                 //string FileText = Encoding.UTF8.GetString(FileBytes);
-                streamWriter.Write(UrlIndex);
+                streamWriter.Write(urlIndex);
                 streamWriter.Close();
             }
         }
 
-        public async void SaveDLConfing(Task<string> data)
+        public async void SaveDlConfing(Task<string> data)
         {
             if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
             {
@@ -112,15 +119,16 @@ namespace T7s_Asset_Downloader
 
             JObject jObject = await ParseResultJson(data);
 
-            string BaseFileUrl = (await GetModify(data))[1].ToString();
-            string[] TempFileUrl = BaseFileUrl.Split('/');
+            string baseFileUrl = (await GetModify(data))[1].ToString();
+            string[] tempFileUrl = baseFileUrl.Split('/');
 
             StringBuilder downloadPath = new StringBuilder();
             for (int j = 0; j < 2; j++)
             {
-                downloadPath.Append(TempFileUrl[j]);
+                downloadPath.Append(tempFileUrl[j]);
                 downloadPath.Append("/");
             }
+
             DownloadConfings.Add(new DownloadConfing
             {
                 Revision = jObject["updateResource"]["revision"].ToString(),
@@ -132,15 +140,16 @@ namespace T7s_Asset_Downloader
                 ImageRev = jObject["updateResource"]["imageRev"].ToString(),
                 ImagePath = jObject["updateResource"]["imagePath"].ToString()
             });
-            string DownloadConfing = JsonConvert.SerializeObject(DownloadConfings);
+            string downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
             using (StreamWriter streamWriter = new StreamWriter(Define.GetAdvanceConfingPath()))
             {
-                streamWriter.Write(DownloadConfing);
+                streamWriter.Write(downloadConfing);
                 streamWriter.Close();
             }
+
             DownloadConfings.Clear();
             OnGetComplete();
-    }
+        }
 
         public async void SaveUrlIndex(Task<string> data)
         {
@@ -151,17 +160,19 @@ namespace T7s_Asset_Downloader
 
             await ParseModify(data);
             await ParseModify(data, true);
-            string UrlIndex = JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+            string urlIndex =
+                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
             using (StreamWriter streamWriter = new StreamWriter(Define.GetAdvanceIndexPath()))
             {
-                streamWriter.Write(UrlIndex);
+                streamWriter.Write(urlIndex);
                 streamWriter.Close();
             }
+
             FileUrls.Clear();
             OnGetComplete();
         }
 
-        public async void SaveDLConfing(Task<string> data , bool encrypt)
+        public async void SaveDlConfing(Task<string> data, bool encrypt)
         {
             if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
             {
@@ -170,15 +181,16 @@ namespace T7s_Asset_Downloader
 
             JObject jObject = await ParseResultJson(data);
 
-            string BaseFileUrl = (await GetModify(data))[1].ToString();
-            string[] TempFileUrl = BaseFileUrl.Split('/');
+            string baseFileUrl = (await GetModify(data))[1].ToString();
+            string[] tempFileUrl = baseFileUrl.Split('/');
 
             StringBuilder downloadPath = new StringBuilder();
             for (int j = 0; j < 2; j++)
             {
-                downloadPath.Append(TempFileUrl[j]);
+                downloadPath.Append(tempFileUrl[j]);
                 downloadPath.Append("/");
             }
+
             DownloadConfings.Add(new DownloadConfing
             {
                 Revision = jObject["updateResource"]["revision"].ToString(),
@@ -190,24 +202,23 @@ namespace T7s_Asset_Downloader
                 ImageRev = jObject["updateResource"]["imageRev"].ToString(),
                 ImagePath = jObject["updateResource"]["imagePath"].ToString()
             });
-            string DownloadConfing = JsonConvert.SerializeObject(DownloadConfings);
+            string downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
             using (FileStream fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
             {
-                byte[] FileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(DownloadConfing), true, true);
-                fileStream.Write(FileBytes, 0, FileBytes.Length);
+                byte[] fileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(downloadConfing), true, true);
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
                 fileStream.Close();
             }
 
             Define.jsonParse.DownloadConfings.Clear();
-            Define.jsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",encrypt);
+            Define.jsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
             Define._ini_Coning();
             DownloadConfings.Clear();
             Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
             File.Copy(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",
-                Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json", true );
+                Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json", true);
             File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json",
                 Define.GetConfingPath(), true);
-
         }
 
         public async void SaveUrlIndex(Task<string> data, bool encrypt)
@@ -219,54 +230,58 @@ namespace T7s_Asset_Downloader
 
             await ParseModify(data);
             await ParseModify(data, true);
-            string UrlIndex = JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
-            using (FileStream fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
+            string urlIndex =
+                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+            using (FileStream fileStream =
+                File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
             {
-                byte[] FileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(UrlIndex),false, true);
-                fileStream.Write(FileBytes, 0, FileBytes.Length);
+                byte[] fileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(urlIndex), false, true);
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
                 fileStream.Close();
             }
+
             FileUrls.Clear();
             Define.jsonParse.FileUrls.Clear();
             File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
                 Define.GetIndexPath(), true);
-            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(),encrypt);
+            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
             Define.isGetNewComplete = true;
             OnGetComplete();
         }
-
 
         #endregion
 
         public void LoadUrlIndex(string indexPath)
         {
-            using (System.IO.StreamReader file = System.IO.File.OpenText(indexPath))
+            using (var file = System.IO.File.OpenText(indexPath))
             {
                 FileUrls = DeserializeJsonToList(file.ReadToEnd());
             }
         }
+
         public void LoadUrlIndex(string indexPath, bool encrypt)
         {
-            byte[] FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(indexPath), false, true);
-            string FileText = Encoding.UTF8.GetString(FileBytes);
-            FileUrls = DeserializeJsonToList(FileText);
-
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(indexPath), false, true);
+            string fileText = Encoding.UTF8.GetString(fileBytes);
+            FileUrls = DeserializeJsonToList(fileText);
         }
+
         public void LoadConfing(string confingPath)
         {
             using (System.IO.StreamReader file = System.IO.File.OpenText(confingPath))
             {
-                DownloadConfings = DeserializeJsonToList(file.ReadToEnd() , true);
+                DownloadConfings = DeserializeJsonToList(file.ReadToEnd(), true);
             }
         }
 
-        public void LoadConfing(string confingPath , bool encrypt)
+        public void LoadConfing(string confingPath, bool encrypt)
         {
-            byte[] FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(confingPath), true , true);
-            string FileText = Encoding.UTF8.GetString(FileBytes);
-            DownloadConfings = DeserializeJsonToList(FileText, true);
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(confingPath), true, true);
+            string fileText = Encoding.UTF8.GetString(fileBytes);
+            DownloadConfings = DeserializeJsonToList(fileText, true);
         }
-        public static List<DownloadConfing> DeserializeJsonToList(string json ,bool isConfing )
+
+        public static List<DownloadConfing> DeserializeJsonToList(string json, bool isConfing)
         {
             JsonSerializer serializer = new JsonSerializer();
             StringReader sr = new StringReader(json);
@@ -274,7 +289,8 @@ namespace T7s_Asset_Downloader
             List<DownloadConfing> list = o as List<DownloadConfing>;
             return list;
         }
-        public static List<FileUrl> DeserializeJsonToList (string json)
+
+        public static List<FileUrl> DeserializeJsonToList(string json)
         {
             JsonSerializer serializer = new JsonSerializer();
             StringReader sr = new StringReader(json);
@@ -283,31 +299,32 @@ namespace T7s_Asset_Downloader
             return list;
         }
 
-        public void ParseModify ( string path , bool oneByOneModify = false)
+        public void ParseModify(string path, bool oneByOneModify = false)
         {
-            int UrlNum = GetModify(path, oneByOneModify).Count - 1;
-            JArray UrlList = GetModify(path, oneByOneModify);
-            for (int i = 0; i < UrlNum; i++)
+            int urlNum = GetModify(path, oneByOneModify).Count - 1;
+            JArray urlList = GetModify(path, oneByOneModify);
+            for (int i = 0; i < urlNum; i++)
             {
-                string BaseFileUrl = UrlList[i].ToString();
-                string[] TempFileUrl = BaseFileUrl.Split('/');
+                string baseFileUrl = urlList[i].ToString();
+                string[] tempFileUrl = baseFileUrl.Split('/');
 
-                StringBuilder FileUrl = new StringBuilder();
-                for (int j = 2; j < TempFileUrl.Length; j++)
+                StringBuilder fileUrl = new StringBuilder();
+                for (int j = 2; j < tempFileUrl.Length; j++)
                 {
-                    FileUrl.Append(TempFileUrl[j]);
-                    if (!(j == TempFileUrl.Length))
+                    fileUrl.Append(tempFileUrl[j]);
+                    if (j != tempFileUrl.Length)
                     {
-                        FileUrl.Append("/");
+                        fileUrl.Append("/");
                     }
                 }
+
                 if (!oneByOneModify)
                 {
-                    AddFileUrl(TempFileUrl.Last(), FileUrl.ToString(), URL_TYPE.Modify);
+                    AddFileUrl(tempFileUrl.Last(), fileUrl.ToString(), URL_TYPE.Modify);
                 }
                 else
                 {
-                    AddFileUrl(TempFileUrl.Last(), FileUrl.ToString(), URL_TYPE.oneByOneModify);
+                    AddFileUrl(tempFileUrl.Last(), fileUrl.ToString(), URL_TYPE.oneByOneModify);
                 }
             }
         }
@@ -315,7 +332,7 @@ namespace T7s_Asset_Downloader
         /// <summary>
         /// 解析ResultJson
         /// </summary>
-        public JObject ParseResultJson (string path)
+        public JObject ParseResultJson(string path)
         {
             string jsonfile = path;
 
@@ -323,55 +340,51 @@ namespace T7s_Asset_Downloader
             {
                 using (JsonTextReader reader = new JsonTextReader(file))
                 {
-                    return (JObject)JToken.ReadFrom(reader);
+                    return (JObject) JToken.ReadFrom(reader);
                 }
             }
         }
+
         /// <summary>
         /// 读取Url位置
         /// </summary>
-        public JArray GetModify (string path, bool oneByOneModify = false)
+        public JArray GetModify(string path, bool oneByOneModify = false)
         {
             if (!oneByOneModify)
             {
-                return (JArray)ParseResultJson(path)["updateResource"]["modifyList"];
+                return (JArray) ParseResultJson(path)["updateResource"]["modifyList"];
             }
             else
             {
-                return (JArray)ParseResultJson(path)["updateResource"]["oneByOneModifyList"];
+                return (JArray) ParseResultJson(path)["updateResource"]["oneByOneModifyList"];
             }
         }
-
 
 
         public async Task ParseModify(Task<string> data, bool oneByOneModify = false)
         {
-            JArray UrlList = await GetModify(data, oneByOneModify);
+            JArray urlList = await GetModify(data, oneByOneModify);
 
-            for (int i = 0; i < UrlList.Count - 1; i++)
+            for (var i = 0; i < urlList.Count - 1; i++)
             {
-                string BaseFileUrl = UrlList[i].ToString();
-                string[] TempFileUrl = BaseFileUrl.Split('/');
+                var baseFileUrl = urlList[i].ToString();
+                var tempFileUrl = baseFileUrl.Split('/');
 
-                StringBuilder FileUrl = new StringBuilder();
-                for (int j = 2; j < TempFileUrl.Length; j++)
+                StringBuilder fileUrl = new StringBuilder();
+                for (int j = 2; j < tempFileUrl.Length; j++)
                 {
-                    FileUrl.Append(TempFileUrl[j]);
-                    if (!(j == TempFileUrl.Length - 1))
+                    fileUrl.Append(tempFileUrl[j]);
+                    if (j != tempFileUrl.Length - 1)
                     {
-                        FileUrl.Append("/");
+                        fileUrl.Append("/");
                     }
                 }
-                if (!oneByOneModify)
-                {
-                    AddFileUrl(TempFileUrl.Last(), FileUrl.ToString(), URL_TYPE.Modify);
-                }
-                else
-                {
-                    AddFileUrl(TempFileUrl.Last(), FileUrl.ToString(), URL_TYPE.oneByOneModify);
-                }
+
+                AddFileUrl(tempFileUrl.Last(), fileUrl.ToString(),
+                    !oneByOneModify ? URL_TYPE.Modify : URL_TYPE.oneByOneModify);
             }
         }
+
         /// <summary>
         /// 异步读取Url
         /// </summary>
@@ -380,11 +393,11 @@ namespace T7s_Asset_Downloader
             JObject jObject = await ParseResultJson(data);
             if (!oneByOneModify)
             {
-                return (JArray)jObject["updateResource"]["modifyList"];
+                return (JArray) jObject["updateResource"]["modifyList"];
             }
             else
             {
-                return (JArray)(await ParseResultJson(data))["updateResource"]["oneByOneModifyList"];
+                return (JArray) (await ParseResultJson(data))["updateResource"]["oneByOneModifyList"];
             }
         }
 
@@ -439,12 +452,7 @@ namespace T7s_Asset_Downloader
                 URL_TYPE = uRL_TYPE
             });
         }
-
-
-
     }
-
-
 
 
     /// <summary>
@@ -456,6 +464,7 @@ namespace T7s_Asset_Downloader
         /// Modify
         /// </summary>
         Modify,
+
         /// <summary>
         /// oneByOneModify
         /// </summary>

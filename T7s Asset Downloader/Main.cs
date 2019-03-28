@@ -358,7 +358,6 @@ namespace T7s_Asset_Downloader
                     }
                     await Task.Run(() =>
                     {
-                        SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + TotalCount, downloadNotice);
                         while (!(DownloadDoneList.Count == TotalCount)) { };
                         Thread.Sleep(100);
                         GC.Collect();
@@ -367,7 +366,7 @@ namespace T7s_Asset_Downloader
                 else
                 {
                     isSevealFiles = false;
-                    Define.DownloadTaskSleep = (TotalCount < 200) ? 50 : (TotalCount > 1000) ? 500 :TotalCount / 3;
+                    Define.DownloadTaskSleep = (TotalCount < 200) ? 100 : (TotalCount > 1000) ? 500 :TotalCount / 3;
                     foreach (var fileName in WillDownloadList)
                     {
                         await DownloadTaskFactory.StartNew((Func<object, Task>)(async NowFileName =>
@@ -379,7 +378,6 @@ namespace T7s_Asset_Downloader
                     }
                     await Task.Run(() =>
                     {
-                        SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + TotalCount, downloadNotice);
                         while (!(DownloadDoneList.Count == TotalCount)) { };
                         Thread.Sleep(100);
                         GC.Collect();
@@ -389,7 +387,6 @@ namespace T7s_Asset_Downloader
             finally
             {
                 SetNoticesText("下载完成 >> 共 " + TotalCount + " 个文件 ! !", downloadNotice);
-                //var ErrorList = WillDownloadList.Except(DownloadDoneList.ToArray());
                 button_DownloadCancel.Visible = false;
             }
 
@@ -440,7 +437,7 @@ namespace T7s_Asset_Downloader
             };
             if (!index)
             {
-                jsonParse.SaveDLConfing(
+                jsonParse.SaveDlConfing(
                 Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
             }
             else

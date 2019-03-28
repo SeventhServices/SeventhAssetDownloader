@@ -27,7 +27,7 @@ namespace T7s_Asset_Downloader
         private void Button_GetConfing_Click(object sender, EventArgs e)
         {
             Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
-            new JsonParse().SaveDLConfing(
+            new JsonParse().SaveDlConfing(
                 new MakeRequest().MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)));
         }
 
@@ -62,7 +62,6 @@ namespace T7s_Asset_Downloader
         private void Advance_Load(object sender, EventArgs e)
         {
         }
-
 
     }
 
