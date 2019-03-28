@@ -6,7 +6,7 @@ A Downloader For Nanasis/t7s.
 ## What can it do
 
 * Auto to get all assets list.
-* Seach and select files to download.
+* Seach and select files to download and auto to decrypt them.
 * Get the update asset list when the new version release.
 * Contrast the differents between two version.
 
