@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using T7s_Enc_Decoder;
-using System.Threading;
 
 namespace T7s_Asset_Downloader
 {
@@ -33,7 +32,10 @@ namespace T7s_Asset_Downloader
             public string ImagePath { get; set; }
         }
 
+        public JObject ResultJsonObject; 
+
         public List<FileUrl> FileUrls = new List<FileUrl>();
+
         public List<DownloadConfing> DownloadConfings = new List<DownloadConfing>();
 
         private void OnGetComplete()
@@ -52,7 +54,376 @@ namespace T7s_Asset_Downloader
             });
         }
 
-        #region
+        public void AddFileUrl(JsonParse jsonParse, string name, string url, URL_TYPE uRL_TYPE)
+        {
+            jsonParse.FileUrls.Add(new FileUrl
+            {
+                Name = name,
+                Url = url,
+                URL_TYPE = uRL_TYPE
+            });
+        }
+
+        public void DeleteFileUrl(JsonParse jsonParse, string name)
+        {
+            var fileUrls = jsonParse.FileUrls.SingleOrDefault(u => u.Name == name);
+            jsonParse.FileUrls.Remove(fileUrls);
+        }
+
+
+        #region Save Data Encrypt Async
+
+        public async void UpdateUrlIndex(JsonParse jsonParse, Task<string> data, bool encrypt)
+        {
+            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev))
+            {
+                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
+            }
+
+            await ParseResultJsonAsync(data);
+
+            ParseModify(false,true,jsonParse);
+            ParseModify(true,true,jsonParse);
+
+            foreach (var deleteFiles in GetModify(false,true))
+            {
+                DeleteFileUrl(jsonParse,deleteFiles.ToString());
+            }
+
+            var urlIndex = JsonConvert.SerializeObject(jsonParse.FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+            using (var fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
+            {
+                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(urlIndex), false, true);
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
+                fileStream.Close();
+            }
+
+            FileUrls.Clear();
+            Define.jsonParse.FileUrls.Clear();
+            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
+                Define.GetIndexPath(), true);
+            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
+            Define.IsGetNewComplete = true;
+        }
+
+        public async Task<UPDATE_STATUS> SaveDlConfing(Task<string> data, bool encrypt)
+        {
+            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
+            {
+                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
+            }
+
+            ResultJsonObject = null;
+
+            await ParseResultJsonAsync(data);
+
+            var testRev = GetRevOrError();
+            if (testRev.Substring(0,1) == "e")
+            {
+                return UPDATE_STATUS.Error;
+            }
+            else
+            {
+                if (Convert.ToInt16(Define.LastRev) >= Convert.ToInt16(testRev))
+                {
+                    return UPDATE_STATUS.NoNecessary;
+                }
+            }
+
+            var baseFileUrl = (GetModify())[1].ToString();
+            var tempFileUrl = baseFileUrl.Split('/');
+
+            var downloadPath = new StringBuilder();
+            for (var j = 0; j < 2; j++)
+            {
+                downloadPath.Append(tempFileUrl[j]);
+                downloadPath.Append("/");
+            }
+
+            DownloadConfings.Add(new DownloadConfing
+            {
+                Revision = ResultJsonObject["updateResource"]["revision"].ToString(),
+                DownloadDomain = ResultJsonObject["updateResource"]["downloadConfig"]["domain"].ToString(),
+                DownloadPath = downloadPath.ToString(),
+                NewDownloadSize = ResultJsonObject["updateResource"]["downloadSize"].ToString(),
+                OneByOneDownloadPath = ResultJsonObject["updateResource"]["downloadConfig"]["oneByOneDownloadPath"].ToString(),
+                SubDomain = ResultJsonObject["updateResource"]["downloadConfig"]["subDomain"].ToString(),
+                ImageRev = ResultJsonObject["updateResource"]["imageRev"].ToString(),
+                ImagePath = ResultJsonObject["updateResource"]["imagePath"].ToString()
+            });
+            var downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
+            using (var fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
+            {
+                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(downloadConfing), true, true);
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
+                fileStream.Close();
+            }
+
+            Define.jsonParse.DownloadConfings.Clear();
+            Define.jsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
+            Define._ini_Coning();
+            DownloadConfings.Clear();
+            Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
+            File.Copy(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",
+                Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json", true);
+            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json",
+                Define.GetConfingPath(), true);
+
+            return UPDATE_STATUS.Ok;
+        }
+
+        public async void SaveUrlIndex(Task<string> data, bool encrypt)
+        {
+            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev))
+            {
+                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
+            }
+
+            FileUrls.Clear();
+
+            ResultJsonObject = null;
+
+            await ParseResultJsonAsync(data);
+
+            ParseModify();
+            ParseModify(true);
+
+            var urlIndex =
+                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+            using (FileStream fileStream =
+                File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
+            {
+                byte[] fileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(urlIndex), false, true);
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
+                fileStream.Close();
+            }
+
+            FileUrls.Clear();
+            Define.jsonParse.FileUrls.Clear();
+            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
+                Define.GetIndexPath(), true);
+            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
+            Define.IsGetNewComplete = true;
+            //OnGetComplete();
+        }
+
+        #endregion
+
+        #region Load Data Encrypt
+
+        public void LoadUrlIndex(string indexPath, bool encrypt)
+        {
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(indexPath), false, true);
+            string fileText = Encoding.UTF8.GetString(fileBytes);
+            FileUrls = DeserializeJsonToList(fileText);
+        }
+
+        public void LoadConfing(string confingPath, bool encrypt)
+        {
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(confingPath), true, true);
+            string fileText = Encoding.UTF8.GetString(fileBytes);
+            DownloadConfings = DeserializeJsonToList(fileText, true);
+        }
+
+        public static List<DownloadConfing> DeserializeJsonToList(string json, bool isConfing)
+        {
+            JsonSerializer serializer = new JsonSerializer();
+            StringReader sr = new StringReader(json);
+            object o = serializer.Deserialize(new JsonTextReader(sr), typeof(List<DownloadConfing>));
+            List<DownloadConfing> list = o as List<DownloadConfing>;
+            return list;
+        }
+
+        public static List<FileUrl> DeserializeJsonToList(string json)
+        {
+            JsonSerializer serializer = new JsonSerializer();
+            StringReader sr = new StringReader(json);
+            object o = serializer.Deserialize(new JsonTextReader(sr), typeof(List<FileUrl>));
+            List<FileUrl> list = o as List<FileUrl>;
+            return list;
+        }
+
+        #endregion
+
+        #region Read Json String Async
+
+        public async Task<UPDATE_STATUS> TestUpdateStatusAsync( Task<string> data)
+        {
+            ResultJsonObject = null;
+
+            await ParseResultJsonAsync(data);
+
+            var testRev = GetRevOrError();
+            if (testRev.Substring(0, 1) == "e")
+            {
+                return UPDATE_STATUS.Error;
+            }
+            else
+            {
+                return Convert.ToInt16(Define.NowRev) >= Convert.ToInt16(testRev) 
+                    ? UPDATE_STATUS.NoNecessary 
+                    : UPDATE_STATUS.Ok;
+            }
+        }
+
+
+
+        public string GetRevOrError()
+        {
+            if (ResultJsonObject.Property("error") != null)
+            {
+                return $"error:{ResultJsonObject["error"]["errorCode"]}";
+            }
+            var rev = ResultJsonObject["rev"];
+            return rev != null ? rev.ToString() :"error";
+        }
+
+        public void ParseModify( bool oneByOneModify = false, bool update = false,
+            JsonParse jsonParse = null)
+        {
+            var urlList = GetModify( oneByOneModify );
+
+            foreach (var url in urlList)
+            {
+                var baseFileUrl = url.ToString();
+                var tempFileUrl = baseFileUrl.Split('/');
+
+                var fileUrl = new StringBuilder();
+                for (var j = 2; j < tempFileUrl.Length; j++)
+                {
+                    fileUrl.Append(tempFileUrl[j]);
+                    if (j != tempFileUrl.Length - 1)
+                    {
+                        fileUrl.Append("/");
+                    }
+                }
+
+                if (update)
+                {
+                    AddFileUrl(jsonParse, tempFileUrl.Last(), fileUrl.ToString(),
+                        !oneByOneModify ? URL_TYPE.Modify : URL_TYPE.oneByOneModify);
+                }
+                else
+                {
+                    AddFileUrl(tempFileUrl.Last(), fileUrl.ToString(),
+                        !oneByOneModify ? URL_TYPE.Modify : URL_TYPE.oneByOneModify);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 读取Url
+        /// </summary>
+        public JArray GetModify(bool oneByOneModify = false , bool delete = false)
+        {
+            if (delete)
+            {
+                return (JArray) ResultJsonObject["updateResource"]["deleteList"];
+            }
+            if (!oneByOneModify)
+            {
+                return (JArray) ResultJsonObject["updateResource"]["modifyList"];
+            }
+            else
+            {
+                return (JArray) ResultJsonObject["updateResource"]["oneByOneModifyList"];
+            }
+        }
+
+        /// <summary>
+        /// 异步解析ResultJson
+        /// </summary>
+        public async Task ParseResultJsonAsync(Task<string> data)
+        {
+            string jsonData = await data;
+
+            using (var stringReader = new StringReader(jsonData))
+            {
+                using (var reader = new JsonTextReader(stringReader))
+                {
+                    ResultJsonObject = await JToken.ReadFromAsync(reader) as JObject;
+                }
+            }
+        }
+
+        #endregion
+
+        #region Now UnUsed
+
+        #region Save Data Async
+
+        public async void SaveDlConfing(Task<string> data)
+        {
+            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
+            {
+                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
+            }
+
+            ResultJsonObject = null;
+
+            await ParseResultJsonAsync(data);
+
+            var baseFileUrl = (GetModify())[1].ToString();
+            string[] tempFileUrl = baseFileUrl.Split('/');
+
+            StringBuilder downloadPath = new StringBuilder();
+            for (int j = 0; j < 2; j++)
+            {
+                downloadPath.Append(tempFileUrl[j]);
+                downloadPath.Append("/");
+            }
+
+            DownloadConfings.Add(new DownloadConfing
+            {
+                Revision = ResultJsonObject["updateResource"]["revision"].ToString(),
+                DownloadDomain = ResultJsonObject["updateResource"]["downloadConfig"]["domain"].ToString(),
+                DownloadPath = downloadPath.ToString(),
+                NewDownloadSize = ResultJsonObject["updateResource"]["downloadSize"].ToString(),
+                OneByOneDownloadPath = ResultJsonObject["updateResource"]["downloadConfig"]["oneByOneDownloadPath"].ToString(),
+                SubDomain = ResultJsonObject["updateResource"]["downloadConfig"]["subDomain"].ToString(),
+                ImageRev = ResultJsonObject["updateResource"]["imageRev"].ToString(),
+                ImagePath = ResultJsonObject["updateResource"]["imagePath"].ToString()
+            });
+            string downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
+            using (StreamWriter streamWriter = new StreamWriter(Define.GetAdvanceConfingPath()))
+            {
+                streamWriter.Write(downloadConfing);
+                streamWriter.Close();
+            }
+
+            DownloadConfings.Clear();
+            OnGetComplete();
+        }
+
+        public async void SaveUrlIndex(Task<string> data)
+        {
+            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
+            {
+                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
+            }
+
+            ResultJsonObject = null;
+
+            await ParseResultJsonAsync(data);
+
+            ParseModify();
+            ParseModify(true);
+
+            string urlIndex =
+                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+            using (StreamWriter streamWriter = new StreamWriter(Define.GetAdvanceIndexPath()))
+            {
+                streamWriter.Write(urlIndex);
+                streamWriter.Close();
+            }
+
+            FileUrls.Clear();
+            OnGetComplete();
+        }
+
+        #endregion
+
+        #region Save Data
 
         public void SaveDlConfing(string path)
         {
@@ -110,194 +481,9 @@ namespace T7s_Asset_Downloader
             }
         }
 
-        public async void SaveDlConfing(Task<string> data)
-        {
-            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
-            {
-                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
-            }
-
-            JObject jObject = await ParseResultJson(data);
-
-            string baseFileUrl = (await GetModify(data))[1].ToString();
-            string[] tempFileUrl = baseFileUrl.Split('/');
-
-            StringBuilder downloadPath = new StringBuilder();
-            for (int j = 0; j < 2; j++)
-            {
-                downloadPath.Append(tempFileUrl[j]);
-                downloadPath.Append("/");
-            }
-
-            DownloadConfings.Add(new DownloadConfing
-            {
-                Revision = jObject["updateResource"]["revision"].ToString(),
-                DownloadDomain = jObject["updateResource"]["downloadConfig"]["domain"].ToString(),
-                DownloadPath = downloadPath.ToString(),
-                NewDownloadSize = jObject["updateResource"]["downloadSize"].ToString(),
-                OneByOneDownloadPath = jObject["updateResource"]["downloadConfig"]["oneByOneDownloadPath"].ToString(),
-                SubDomain = jObject["updateResource"]["downloadConfig"]["subDomain"].ToString(),
-                ImageRev = jObject["updateResource"]["imageRev"].ToString(),
-                ImagePath = jObject["updateResource"]["imagePath"].ToString()
-            });
-            string downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
-            using (StreamWriter streamWriter = new StreamWriter(Define.GetAdvanceConfingPath()))
-            {
-                streamWriter.Write(downloadConfing);
-                streamWriter.Close();
-            }
-
-            DownloadConfings.Clear();
-            OnGetComplete();
-        }
-
-        public async void SaveUrlIndex(Task<string> data)
-        {
-            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
-            {
-                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
-            }
-
-            await ParseModify(data);
-            await ParseModify(data, true);
-            string urlIndex =
-                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
-            using (StreamWriter streamWriter = new StreamWriter(Define.GetAdvanceIndexPath()))
-            {
-                streamWriter.Write(urlIndex);
-                streamWriter.Close();
-            }
-
-            FileUrls.Clear();
-            OnGetComplete();
-        }
-
-        public async void SaveDlConfing(Task<string> data, bool encrypt)
-        {
-            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
-            {
-                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
-            }
-
-            JObject jObject = await ParseResultJson(data);
-
-            string baseFileUrl = (await GetModify(data))[1].ToString();
-            string[] tempFileUrl = baseFileUrl.Split('/');
-
-            StringBuilder downloadPath = new StringBuilder();
-            for (int j = 0; j < 2; j++)
-            {
-                downloadPath.Append(tempFileUrl[j]);
-                downloadPath.Append("/");
-            }
-
-            DownloadConfings.Add(new DownloadConfing
-            {
-                Revision = jObject["updateResource"]["revision"].ToString(),
-                DownloadDomain = jObject["updateResource"]["downloadConfig"]["domain"].ToString(),
-                DownloadPath = downloadPath.ToString(),
-                NewDownloadSize = jObject["updateResource"]["downloadSize"].ToString(),
-                OneByOneDownloadPath = jObject["updateResource"]["downloadConfig"]["oneByOneDownloadPath"].ToString(),
-                SubDomain = jObject["updateResource"]["downloadConfig"]["subDomain"].ToString(),
-                ImageRev = jObject["updateResource"]["imageRev"].ToString(),
-                ImagePath = jObject["updateResource"]["imagePath"].ToString()
-            });
-            string downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
-            using (FileStream fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
-            {
-                byte[] fileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(downloadConfing), true, true);
-                fileStream.Write(fileBytes, 0, fileBytes.Length);
-                fileStream.Close();
-            }
-
-            Define.jsonParse.DownloadConfings.Clear();
-            Define.jsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
-            Define._ini_Coning();
-            DownloadConfings.Clear();
-            Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
-            File.Copy(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",
-                Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json", true);
-            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json",
-                Define.GetConfingPath(), true);
-        }
-
-        public async void SaveUrlIndex(Task<string> data, bool encrypt)
-        {
-            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev))
-            {
-                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
-            }
-
-            await ParseModify(data);
-            await ParseModify(data, true);
-            string urlIndex =
-                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
-            using (FileStream fileStream =
-                File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
-            {
-                byte[] fileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(urlIndex), false, true);
-                fileStream.Write(fileBytes, 0, fileBytes.Length);
-                fileStream.Close();
-            }
-
-            FileUrls.Clear();
-            Define.jsonParse.FileUrls.Clear();
-            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
-                Define.GetIndexPath(), true);
-            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
-            Define.isGetNewComplete = true;
-            OnGetComplete();
-        }
-
         #endregion
 
-        public void LoadUrlIndex(string indexPath)
-        {
-            using (var file = System.IO.File.OpenText(indexPath))
-            {
-                FileUrls = DeserializeJsonToList(file.ReadToEnd());
-            }
-        }
-
-        public void LoadUrlIndex(string indexPath, bool encrypt)
-        {
-            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(indexPath), false, true);
-            string fileText = Encoding.UTF8.GetString(fileBytes);
-            FileUrls = DeserializeJsonToList(fileText);
-        }
-
-        public void LoadConfing(string confingPath)
-        {
-            using (System.IO.StreamReader file = System.IO.File.OpenText(confingPath))
-            {
-                DownloadConfings = DeserializeJsonToList(file.ReadToEnd(), true);
-            }
-        }
-
-        public void LoadConfing(string confingPath, bool encrypt)
-        {
-            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(confingPath), true, true);
-            string fileText = Encoding.UTF8.GetString(fileBytes);
-            DownloadConfings = DeserializeJsonToList(fileText, true);
-        }
-
-        public static List<DownloadConfing> DeserializeJsonToList(string json, bool isConfing)
-        {
-            JsonSerializer serializer = new JsonSerializer();
-            StringReader sr = new StringReader(json);
-            object o = serializer.Deserialize(new JsonTextReader(sr), typeof(List<DownloadConfing>));
-            List<DownloadConfing> list = o as List<DownloadConfing>;
-            return list;
-        }
-
-        public static List<FileUrl> DeserializeJsonToList(string json)
-        {
-            JsonSerializer serializer = new JsonSerializer();
-            StringReader sr = new StringReader(json);
-            object o = serializer.Deserialize(new JsonTextReader(sr), typeof(List<FileUrl>));
-            List<FileUrl> list = o as List<FileUrl>;
-            return list;
-        }
+        #region Read Json String
 
         public void ParseModify(string path, bool oneByOneModify = false)
         {
@@ -360,100 +546,30 @@ namespace T7s_Asset_Downloader
             }
         }
 
+        #endregion
 
-        public async Task ParseModify(Task<string> data, bool oneByOneModify = false)
+        #region Load Data
+
+        public void LoadUrlIndex(string indexPath)
         {
-            JArray urlList = await GetModify(data, oneByOneModify);
-
-            for (var i = 0; i < urlList.Count - 1; i++)
+            using (var file = System.IO.File.OpenText(indexPath))
             {
-                var baseFileUrl = urlList[i].ToString();
-                var tempFileUrl = baseFileUrl.Split('/');
-
-                StringBuilder fileUrl = new StringBuilder();
-                for (int j = 2; j < tempFileUrl.Length; j++)
-                {
-                    fileUrl.Append(tempFileUrl[j]);
-                    if (j != tempFileUrl.Length - 1)
-                    {
-                        fileUrl.Append("/");
-                    }
-                }
-
-                AddFileUrl(tempFileUrl.Last(), fileUrl.ToString(),
-                    !oneByOneModify ? URL_TYPE.Modify : URL_TYPE.oneByOneModify);
+                FileUrls = DeserializeJsonToList(file.ReadToEnd());
             }
         }
 
-        /// <summary>
-        /// 异步读取Url
-        /// </summary>
-        public async Task<JArray> GetModify(Task<string> data, bool oneByOneModify = false)
+        public void LoadConfing(string confingPath)
         {
-            JObject jObject = await ParseResultJson(data);
-            if (!oneByOneModify)
+            using (System.IO.StreamReader file = System.IO.File.OpenText(confingPath))
             {
-                return (JArray) jObject["updateResource"]["modifyList"];
-            }
-            else
-            {
-                return (JArray) (await ParseResultJson(data))["updateResource"]["oneByOneModifyList"];
+                DownloadConfings = DeserializeJsonToList(file.ReadToEnd(), true);
             }
         }
 
-        /// <summary>
-        /// 异步解析ResultJson
-        /// </summary>
-        public async Task<JObject> ParseResultJson(Task<string> data)
-        {
-            string JsonData = await data;
+        #endregion
 
-            using (StringReader stringReader = new StringReader(JsonData))
-            {
-                using (JsonTextReader reader = new JsonTextReader(stringReader))
-                {
-                    return await JToken.ReadFromAsync(reader) as JObject;
-                }
-            }
-        }
+        #endregion
     }
-
-    class JsonParseSync
-    {
-        public class FileUrl
-        {
-            public string Name { get; set; }
-            public string Url { get; set; }
-            public URL_TYPE URL_TYPE { get; set; }
-        }
-
-        public class DownloadConfing
-        {
-            public string Revision { get; set; }
-            public string DownloadDomain { get; set; }
-            public string DownloadPath { get; set; }
-            public string NewDownloadSize { get; set; }
-            public string OneByOneDownloadPath { get; set; }
-            public string SubDomain { get; set; }
-            public string ImageRev { get; set; }
-            public string ImageDomain { get; set; }
-            public string ImagePath { get; set; }
-        }
-
-        public List<FileUrl> FileUrls = new List<FileUrl>();
-        public List<DownloadConfing> DownloadConfings = new List<DownloadConfing>();
-
-        public void AddFileUrl(string name, string url, URL_TYPE uRL_TYPE)
-        {
-            FileUrls.Add(new FileUrl
-            {
-                Name = name,
-                Url = url,
-                URL_TYPE = uRL_TYPE
-            });
-        }
-    }
-
 
     /// <summary>
     /// 定义URLTYPE
@@ -469,5 +585,15 @@ namespace T7s_Asset_Downloader
         /// oneByOneModify
         /// </summary>
         oneByOneModify
+    }
+
+    public enum UPDATE_STATUS
+    {
+
+        Error,
+
+        NoNecessary,
+
+        Ok
     }
 }

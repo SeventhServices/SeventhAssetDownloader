@@ -399,6 +399,7 @@
             this.button_DownloadCancel.Text = "取消下载";
             this.button_DownloadCancel.UseVisualStyleBackColor = false;
             this.button_DownloadCancel.Visible = false;
+            this.button_DownloadCancel.Click += new System.EventHandler(this.Button_DownloadCancel_Click);
             // 
             // Main
             // 
@@ -423,7 +424,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "Main";
-            this.Text = "T7s Asset Downloader a0.0.7";
+            this.Text = "T7s Asset Downloader a0.0.8";
             this.Load += new System.EventHandler(this.Main_Load);
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();

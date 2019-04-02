@@ -42,6 +42,13 @@ namespace T7s_Enc_Decoder
                     }
                     break;
                 case ENC_TYPE.ERROR:
+                    using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(FilePath)))
+                    {
+                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath));
+                        string FileText = Encoding.UTF8.GetString(FileBytes);
+                        streamWriter.Write(FileText);
+                        streamWriter.Close();
+                    }
                     System.Windows.Forms.MessageBox.Show("无法识别");
                     break;
 
@@ -57,7 +64,6 @@ namespace T7s_Enc_Decoder
                 fileStream.Write(FileBytes, 0, FileBytes.Length);
                 fileStream.Close();
             }
-
 
             switch (Save.GetFileType(FilePath))
             {
@@ -88,6 +94,7 @@ namespace T7s_Enc_Decoder
                     }
                     break;
                 case ENC_TYPE.ERROR:
+
                     System.Windows.Forms.MessageBox.Show("无法识别");
                     break;
 

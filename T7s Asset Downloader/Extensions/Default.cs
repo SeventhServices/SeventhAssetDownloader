@@ -8,7 +8,7 @@ namespace T7s_Asset_Downloader.Extensions
 {
     class Default : IGetUrl
     {
-        private readonly string Domin = "https://d2kvktrbzlzxwg.cloudfront.net/";
+        private readonly string _domin = "https://d2kvktrbzlzxwg.cloudfront.net/";
 
         public string GetUrl(string fileName)
         {

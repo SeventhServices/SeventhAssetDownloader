@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using T7s_Asset_Downloader.Asset;
+using UnityEngine.SocialPlatforms;
 
 namespace T7s_Asset_Downloader
 {
@@ -19,9 +21,11 @@ namespace T7s_Asset_Downloader
         public static string Rev = "297";
         public static string Blt = "135";
         public static string UserRev = "297";
+        
 
         public static string DownloadPath;
-        public static string NowRev;
+        public static string NowRev = "1";
+        public static string LastRev;
         public static string[] DiifList;
 
         public static NOW_STAUTUS NOW_STAUTUS;
@@ -29,18 +33,29 @@ namespace T7s_Asset_Downloader
         public static int DefaultShowCount = 20;
         public static int MaxDownloadTasks = 3;
         public static int DownloadTaskSleep = 300;
-        public static bool isGetNewComplete;
+        public static bool IsGetNewComplete;
+
+        public static async void SetNewVersion()
+        {
+            await Task.Run(() =>
+            {
+                var newVersion = GetVersion.GetNewVersion();
+                if (Convert.ToInt16(newVersion.VersionCode) <= Convert.ToInt16(Blt)) return;
+                Ver = newVersion.Version;
+                Blt = newVersion.VersionCode;
+            });
+        }
 
         public static void _ini_Coning()
         {
             DownloadPath = jsonParse.DownloadConfings.Select(p => p.DownloadPath).ToArray()[0];
-            NowRev = jsonParse.DownloadConfings.Select(p => p.Revision).ToArray()[0];
+            Rev = NowRev = jsonParse.DownloadConfings.Select(p => p.Revision).ToArray()[0];
         }
 
         public static string GetUrl ( string fileName )
         {
-            string UrlPath = jsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
-            return DownloadPath + UrlPath;
+            string urlPath = jsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
+            return DownloadPath + urlPath;
         }
 
         public static string[] GetDefaultNameList()

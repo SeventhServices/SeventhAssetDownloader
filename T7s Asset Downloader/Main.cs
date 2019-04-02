@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -22,6 +21,8 @@ namespace T7s_Asset_Downloader
         }
         private void Main_Load(object sender, EventArgs e)
         {
+            var request = new MakeRequest();
+            request.HttpClientTest(_downloadProcessMessageHandler);
             if (File.Exists(Define.GetIndexPath()))
             {
                 Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), true);
@@ -45,28 +46,33 @@ namespace T7s_Asset_Downloader
                 Define.NOW_STAUTUS = NOW_STAUTUS.NoneIndex;
                 Define.NOW_STAUTUS = NOW_STAUTUS.First;
             }
+
+            TestNew();
             ReloadNoticeLabels();
-            MakeRequest Request = new MakeRequest();
-            Request.HttpClientTest(DownloadProcessMessageHander);
         }
-        private ProgressMessageHandler DownloadProcessMessageHander = new ProgressMessageHandler(new HttpClientHandler());
-        private ProgressMessageHandler PostProcessMessageHander = new ProgressMessageHandler(new HttpClientHandler());
+        private static readonly CancellationTokenSource CancelSource = new CancellationTokenSource();
+        private readonly ProgressMessageHandler _downloadProcessMessageHandler = new ProgressMessageHandler(new HttpClientHandler());
+        private readonly ProgressMessageHandler _postProcessMessageHandler = new ProgressMessageHandler(new HttpClientHandler());
         private delegate void SetNotices( string notices , Label label );
         private delegate void SetProgress( int progress );
         private delegate void SetCallBack( object obj );
-        private delegate void SetEnabled( bool enabled, Button button);
-        private string[] ListResult;
-        private bool isSevealFiles = true;
-        private List<string> DownloadDoneList = new List<string>();
-        private MakeRequest Request = new MakeRequest();
+        private delegate void SetEnable( bool enabled, Button button);
+        private delegate void SetVisible(bool visible, Button button);
+        private string[] _listResult;
+        public bool IsSeveralFiles = true;
+        private readonly List<string> _downloadDoneList = new List<string>();
+        private readonly MakeRequest _request = new MakeRequest();
 
         #region UI逻辑
+
+
+
         private void Button_DownloadAllFiles_Click(object sender, EventArgs e)
         {
-            DownloadDoneList.Clear();
-            if (ListResult.Length > 200)
+            _downloadDoneList.Clear();
+            if (_listResult.Length > 200)
             {
-                if (MessageBox.Show($"请注意，所选文件量为{ListResult.Length}个" + "下载将会花费较长时间。", "Notices", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
+                if (MessageBox.Show($"请注意，所选文件量为{_listResult.Length}个" + "下载将会花费较长时间。", "Notices", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
                     == DialogResult.Cancel)
                 {
                     return;
@@ -77,7 +83,7 @@ namespace T7s_Asset_Downloader
 
         private void Button_DownloadCheckFiles_Click(object sender, EventArgs e)
         {
-            DownloadDoneList.Clear();
+            _downloadDoneList.Clear();
             StartDownload(DOWNLOAD_TYPE.SeletFiles);
         }
         private void Button_OpenDownloadPath_Click(object sender, EventArgs e)
@@ -91,25 +97,25 @@ namespace T7s_Asset_Downloader
 
         private void Button_LoadAllResult_Click(object sender, EventArgs e)
         {
-            if (ListResult == null)
+            if (_listResult == null)
             {
-                ListResult = Define.GetDefaultNameList();
+                _listResult = Define.GetDefaultNameList();
             }
-            ShowlistResult(ListResult, Define.DefaultShowCount, ListResult.Length);
+            ShowlistResult(_listResult, Define.DefaultShowCount, _listResult.Length);
             button_LoadAllResult.Enabled = false;
         }
 
         private void TextBox_SeachFiles_TextChanged(object sender, EventArgs e)
         {
             listBoxResult.Items.Clear();
-            ListResult = Define.GetListResult(textBox_SeachFiles.Text);
-            if (!(ListResult.Length > Define.DefaultShowCount))
+            _listResult = Define.GetListResult(textBox_SeachFiles.Text);
+            if (!(_listResult.Length > Define.DefaultShowCount))
             {
-                ShowlistResult(ListResult, ListResult.Length);
+                ShowlistResult(_listResult, _listResult.Length);
             }
             else
             {
-                ShowlistResult(ListResult, Define.DefaultShowCount);
+                ShowlistResult(_listResult, Define.DefaultShowCount);
             }
             button_LoadAllResult.Enabled = !button_LoadAllResult.Enabled ? true : true;
         }
@@ -121,37 +127,71 @@ namespace T7s_Asset_Downloader
 
         private async void Button_GetNew_Click(object sender, EventArgs e)
         {
-            Request._ini_PostClient(PostProcessMessageHander);
-            Define.isGetNewComplete = false;
+            var UpdateStatus = UPDATE_STATUS.Ok;
+
+            Define.IsGetNewComplete = false;
             button_ReloadAdvance.Enabled = false;
             button_GetNew.Enabled = false;
-            try
+
+            if (Define.NOW_STAUTUS == NOW_STAUTUS.First)
             {
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    Define.Rev = Define.UserRev = (Define.NOW_STAUTUS == NOW_STAUTUS.First) ? (Convert.ToInt32(Define.NowRev) + 296).ToString() : (Convert.ToInt32(Define.NowRev) - 3).ToString();
-                    StartPost();
-                });
-                await Task.Run(() =>
-                {
-                    Define.Rev = Define.UserRev = "001";
-                    StartPost(true);
+                    Define.Rev = Define.UserRev = (Convert.ToInt32(Define.NowRev) + 300).ToString();
+                    UpdateStatus = await StartPost();
                 });
 
-            }
-            finally
-            {
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    while (Define.isGetNewComplete == false) { };
-                    Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
-                    SetNoticesText(">> 就绪 ...", downloadNotice);
-                    ReloadNoticeLabels();
-                    SetButtomEnabled(true, button_GetNew);
-                    SetButtomEnabled(true, button_ReloadAdvance);
-                    _ini_listResult();
+                    Define.Rev = Define.UserRev = "001";
+                    UpdateStatus = await StartPost(true);
                 });
             }
+            else
+            {
+                await Task.Run(async () =>
+                {
+                    Define.LastRev = Define.NowRev;
+                    Define.Rev = Define.UserRev = (Convert.ToInt32(Define.NowRev) - 3).ToString();
+                    UpdateStatus = await StartPost();
+                });
+
+                switch (UpdateStatus)
+                {
+                    case UPDATE_STATUS.Error:
+                        SetNoticesText("Error", downloadNotice);
+                        SetButtomEnabled(true, button_GetNew);
+                        SetButtomEnabled(true, button_ReloadAdvance);
+                        return;
+                    case UPDATE_STATUS.NoNecessary:
+                        SetNoticesText("已经是最新版本", downloadNotice);
+                        SetButtomEnabled(true, button_GetNew);
+                        SetButtomEnabled(true, button_ReloadAdvance);
+                        return;
+                    case UPDATE_STATUS.Ok:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                await Task.Run(async () =>
+                {
+                    Define.Rev = Define.UserRev = Define.LastRev;
+                    UpdateStatus = await StartPost(true,true);
+                });
+            }
+
+            await Task.Run(() =>
+            {
+                while (Define.IsGetNewComplete == false){ }
+                Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
+                SetNoticesText(">> 就绪 ...", downloadNotice);
+                ReloadNoticeLabels();
+                SetButtomEnabled(true, button_GetNew);
+                SetButtomEnabled(true, button_ReloadAdvance);
+                _ini_listResult();
+            });
+  
 
         }
 
@@ -170,7 +210,7 @@ namespace T7s_Asset_Downloader
 
         private void Button_GetDiffList_Click(object sender, EventArgs e)
         {
-            string[] NamesList1 = null, NamesList2 = null;
+            string[] namesList1 = null, namesList2 = null;
 
             JsonParse jsonParse = new JsonParse();
 
@@ -183,11 +223,11 @@ namespace T7s_Asset_Downloader
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 jsonParse.LoadUrlIndex(ofd.FileName, true);
-                NamesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                namesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     jsonParse.LoadUrlIndex(ofd.FileName, true);
-                    NamesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
+                    namesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
                 }
                 else
                 {
@@ -199,20 +239,18 @@ namespace T7s_Asset_Downloader
                 return;
             }
 
-            if (NamesList1 != null)
-            {
-                Define.DiifList = NamesList1.Except(NamesList2).ToArray();
-                NamesList1 = NamesList2 = null;
-                ListResult = Define.DiifList;
-                listBoxResult.Items.Clear();
-                ShowlistResult(Define.DiifList, Define.DiifList.Length);
-            }
+            Define.DiifList = namesList1.Except(namesList2).ToArray();
+            namesList1 = namesList2 = null;
+            _listResult = Define.DiifList;
+            listBoxResult.Items.Clear();
+            ShowlistResult(Define.DiifList, Define.DiifList.Length);
+
         }
         #endregion
 
         #region 委托修改UI
 
-        public void AddListResult(Object item)
+        public void AddListResult(object item)
         {
             listBoxResult.Items.Add(item);
         }
@@ -234,12 +272,25 @@ namespace T7s_Asset_Downloader
         {
             if (button.InvokeRequired)
             {
-                SetEnabled call = new SetEnabled(SetButtomEnabled);
+                var call = new SetEnable(SetButtomEnabled);
                 Invoke(call, new object[] { enabled, button });
             }
             else
             {
                 button.Enabled = enabled;
+            }
+        }
+
+        private void SetButtomVisibled(bool visibled, Button button)
+        {
+            if (button.InvokeRequired)
+            {
+                var call = new SetVisible(SetButtomVisibled);
+                Invoke(call, visibled, button);
+            }
+            else
+            {
+                button.Visible = visibled;
             }
         }
 
@@ -275,7 +326,7 @@ namespace T7s_Asset_Downloader
         /// </summary>
         public void _ini_listResult()
         {
-            ListResult = Define.GetDefaultNameList();
+            _listResult = Define.GetDefaultNameList();
             ShowlistResult(Define.GetDefaultNameList(), Define.DefaultShowCount);
         }
         private void ReloadNoticeLabels()
@@ -286,111 +337,152 @@ namespace T7s_Asset_Downloader
         {
             Task.Run(() =>
             {
-                int NowProcess = (DownloadDoneList.Count / TotalCount) * 100;
-                SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + TotalCount, downloadNotice);
-                if (!isSevealFiles)
-                {
-                    SetProgressInt(NowProcess);
-                };
-            });
+                int NowProcess = (_downloadDoneList.Count / TotalCount) * 100;
+                SetProgressInt(NowProcess);
+            }).Wait();
         }
+
+        private async void TestNew()
+        {
+            _request._ini_PostClient(_postProcessMessageHandler);
+            if (Define.NOW_STAUTUS == NOW_STAUTUS.First)
+            {
+                SetNoticesText(">> 需要获取一次完整索引文件，请点击获取最新版本", downloadNotice);
+                return;
+            }
+
+            SetNoticesText(">> ... 正在自动检测最新版本 , 请稍等 ",downloadNotice);
+
+            var updateStatus = await Task.Run(async () =>
+            {
+                Define.Rev = Define.UserRev = Define.NowRev;
+                return await Define.jsonParse.TestUpdateStatusAsync(_request.MakePostRequest(
+                        Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)));
+            });
+
+            switch (updateStatus)
+            {
+                case UPDATE_STATUS.Error:
+                    SetNoticesText(">> Error : 游戏服务器可能在维护中，请稍后重试", downloadNotice);
+                    return;
+                case UPDATE_STATUS.NoNecessary:
+                    SetNoticesText(">> 已经是最新版本 ", downloadNotice);
+                    return;
+                case UPDATE_STATUS.Ok:
+                    if ((MessageBox.Show(" 检测到最新版本 , 请问是否要现在更新 "
+                            , "Notice"
+                            , MessageBoxButtons.OKCancel)) == DialogResult.OK)
+                    {
+                        Button_GetNew_Click(null, null);
+                    }
+                    else
+                    {
+                        SetNoticesText(">> 就绪 , 有新版本可以更新 ", downloadNotice);
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
 
         /// <summary>
         /// Main control download method. 
         /// </summary>
-        /// <param name="DOWNLOAD_TYPE">下载类型:少量下载或大量下载</param>
-        private async void StartDownload ( DOWNLOAD_TYPE DOWNLOAD_TYPE )
+        /// <param name="downloadType">下载类型:少量下载或大量下载</param>
+        private async void StartDownload ( DOWNLOAD_TYPE downloadType )
         {
             if (!Directory.Exists(Define.GetFileSavePath()))
             {
                 Directory.CreateDirectory(Define.GetFileSavePath());
             }
-
             //Initialize the UI about download
             SetProgressInt(0);
             button_DownloadCancel.Visible = true;
 
-            string[] WillDownloadList;
-            int TotalCount;
-            int NowFileIndex = 0;
+            string[] willDownloadList;
+            int totalCount;
+            var nowFileIndex = 0;
 
-            switch (DOWNLOAD_TYPE)
+            switch (downloadType)
             {
                 case DOWNLOAD_TYPE.AllFiles:
-                    TotalCount = ListResult.Length;
-                    WillDownloadList = ListResult;
+                    totalCount = _listResult.Length;
+                    willDownloadList = _listResult;
                     break;
                 case DOWNLOAD_TYPE.SeletFiles:
-                    TotalCount = listBoxResult.SelectedItems.Count;
-                    if (TotalCount < 1)
+                    totalCount = listBoxResult.SelectedItems.Count;
+                    if (totalCount < 1)
                     {
                         MessageBox.Show("未选择要下载的文件，请点击选择某项或多项文件，再开始下载。", "Notice");
                         button_DownloadCancel.Visible = false;
                         return;
                     }
-                    var CheckedNameList = new string[TotalCount];
-                    for (int i = 0; i < TotalCount; i++)
+                    var checkedNameList = new string[totalCount];
+                    for (int i = 0; i < totalCount; i++)
                     {
-                        CheckedNameList[i] = listBoxResult.SelectedItems[i].ToString();
+                        checkedNameList[i] = listBoxResult.SelectedItems[i].ToString();
                     }
-                    WillDownloadList = CheckedNameList;
+                    willDownloadList = checkedNameList;
                     break;
                 default:
-                    TotalCount = ListResult.Length;
-                    WillDownloadList = ListResult;
+                    totalCount = _listResult.Length;
+                    willDownloadList = _listResult;
                     break;
             }
             //Start Downlaod
             try
             {
+                var cancelToken = CancelSource.Token;
                 var scheduler = new LimitedConcurrencyLevelTaskScheduler(Define.MaxDownloadTasks);
-                TaskFactory DownloadTaskFactory = new TaskFactory(scheduler);
-                SetNoticesText("正在下载 ... " + "共" + TotalCount + "个文件", downloadNotice);
-                if (TotalCount <= 15)
+                var downloadTaskFactory = new TaskFactory(scheduler);
+                if (totalCount <= 15)
                 {
-                    foreach (var fileName in WillDownloadList)
+                    IsSeveralFiles = true;
+                    foreach (var fileName in willDownloadList)
                     {
-                        await DownloadTaskFactory.StartNew((Func<object, Task>)(async NowFileName =>
+                        await downloadTaskFactory.StartNew(async nowFileName =>
                         {
-                            NowFileIndex++;
-                            await DownloadFiles(fileName, NowFileIndex, TotalCount, AUTO_DECRYPT.Auto );
-                        }), fileName);
+                            nowFileIndex++;
+                            await DownloadFiles(fileName, nowFileIndex, totalCount, AUTO_DECRYPT.Auto);
+                        }, fileName,cancelToken);
                     }
-                    await Task.Run(() =>
-                    {
-                        while (!(DownloadDoneList.Count == TotalCount)) { };
-                        Thread.Sleep(100);
-                        GC.Collect();
-                    });
                 }
                 else
                 {
-                    isSevealFiles = false;
-                    Define.DownloadTaskSleep = (TotalCount < 200) ? 100 : (TotalCount > 1000) ? 500 :TotalCount / 3;
-                    foreach (var fileName in WillDownloadList)
-                    {
-                        await DownloadTaskFactory.StartNew((Func<object, Task>)(async NowFileName =>
-                        {
-                            NowFileIndex++;
-                            await DownloadFiles(fileName, NowFileIndex, TotalCount, AUTO_DECRYPT.Auto);
-                            Thread.Sleep((NowFileIndex % 25 == 0) ? 500 : Define.DownloadTaskSleep);
-                        }), fileName);
-                    }
-                    await Task.Run(() =>
-                    {
-                        while (!(DownloadDoneList.Count == TotalCount)) { };
-                        Thread.Sleep(100);
-                        GC.Collect();
-                    });
-                }
-            }
-            finally
-            {
-                SetNoticesText("下载完成 >> 共 " + TotalCount + " 个文件 ! !", downloadNotice);
-                button_DownloadCancel.Visible = false;
-            }
+                    IsSeveralFiles = false;
+                    Define.DownloadTaskSleep = (totalCount < 200) ? 100 : (totalCount > 1000) ? 500 : totalCount / 3;
 
-        }   
+                    foreach (var fileName in willDownloadList)
+                    {
+                        await downloadTaskFactory.StartNew(async nowFileName =>
+                        {
+                            nowFileIndex++;
+                            await downloadTaskFactory.StartNewDelayed((nowFileIndex % 25 == 0)
+                                ? 500
+                                : Define.DownloadTaskSleep);
+                            await DownloadFiles(nowFileName.ToString(), nowFileIndex, totalCount, AUTO_DECRYPT.Auto);
+                        }, fileName,cancelToken);
+                    }
+                }
+                cancelToken.ThrowIfCancellationRequested();
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+            }
+        }
+
+        private void OnDownloadDone( int totalCount)
+        {
+            if (_downloadDoneList.Count != totalCount) return;
+            GC.Collect();
+            Thread.Sleep(200);
+            SetNoticesText("下载完成 >> 共 " + totalCount + " 个文件 ! !", downloadNotice);
+            SetButtomVisibled(false,button_DownloadCancel);
+        }
+
 
         /// <summary>
         /// Main Download method
@@ -402,17 +494,23 @@ namespace T7s_Asset_Downloader
         /// <returns></returns>
         private async Task DownloadFiles(string fileName, int fileNameIndex, int totalCount, AUTO_DECRYPT AUTO_DECRYPT )
         {
-            SetNoticesText("正在下载 ... " + DownloadDoneList.Count + " / " + totalCount, downloadNotice);
-            if (isSevealFiles)
+            SetNoticesText("正在下载 ... " + _downloadDoneList.Count + " / " + totalCount, downloadNotice);
+            if (IsSeveralFiles)
             {
-                DownloadProcessMessageHander.HttpReceiveProgress += (senders, es) =>
+                _downloadProcessMessageHandler.HttpReceiveProgress += (senders, es) =>
                 {
-                    int num = es.ProgressPercentage;
+                    var num = es.ProgressPercentage;
                     SetProgressInt(num);
                 };
             }
-            DownloadDoneList.Add(await Request.MkaeGetRequest(Define.GetUrl(fileName), Define.GetFileSavePath(), fileName));
-            ReloadProcess(totalCount);
+            _downloadDoneList.Add(await _request.MakeGetRequest(Define.GetUrl(fileName), Define.GetFileSavePath(), fileName));
+            SetNoticesText("正在下载 ... " + _downloadDoneList.Count + " / " + totalCount, downloadNotice);
+            
+            if (!IsSeveralFiles)
+            {
+                ReloadProcess(totalCount);
+            }
+            
             if (AUTO_DECRYPT == AUTO_DECRYPT.Auto)
             {
                 if (Save.GetFileType(fileName) != ENC_TYPE.ERROR)
@@ -420,32 +518,42 @@ namespace T7s_Asset_Downloader
                     DecryptFiles.DecryptFile(Define.GetFileSavePath() + fileName);
                 }
             }
+            OnDownloadDone(totalCount);
         }
 
         /// <summary>
         /// Main post method
         /// </summary>
         /// <param name="index"></param>
-        private void StartPost(bool index = false)
+        private async Task<UPDATE_STATUS> StartPost(bool index = false , bool update = false)
         {
             SetNoticesText("正在获取新版本数据 ...请稍等..." , downloadNotice);
             JsonParse jsonParse = new JsonParse();
-            PostProcessMessageHander.HttpSendProgress += (senders, es) =>
+            _postProcessMessageHandler.HttpSendProgress += (senders, es) =>
             {
                 int num = es.ProgressPercentage;
                 SetProgressInt(num);
             };
             if (!index)
             {
-                jsonParse.SaveDlConfing(
-                Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
+                return await jsonParse.SaveDlConfing(
+                _request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
             }
             else
             {
-                jsonParse.SaveUrlIndex(
-                Request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
-            }
+                if (update)
+                {
+                    jsonParse.UpdateUrlIndex(Define.jsonParse,
+                        _request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
+                }
+                else
+                {
+                    jsonParse.SaveUrlIndex(
+                    _request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
+                }
 
+                return UPDATE_STATUS.Ok;
+            }
         }
 
         /// <summary>
@@ -480,6 +588,12 @@ namespace T7s_Asset_Downloader
                 }
             });
         }
+
+        private void Button_DownloadCancel_Click(object sender, EventArgs e)
+        {
+            CancelSource.Cancel();
+        }
+
 
         //test
 

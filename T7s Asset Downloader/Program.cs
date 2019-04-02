@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace T7s_Asset_Downloader
@@ -14,6 +11,7 @@ namespace T7s_Asset_Downloader
         [STAThread]
         static void Main()
         {
+            Define.SetNewVersion();
             Define.LocalPath = Application.StartupPath;
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
