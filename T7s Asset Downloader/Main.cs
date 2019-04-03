@@ -70,9 +70,9 @@ namespace T7s_Asset_Downloader
         private void Button_DownloadAllFiles_Click(object sender, EventArgs e)
         {
             _downloadDoneList.Clear();
-            if (_listResult.Length > 200)
+            if (_listResult.Length > 50)
             {
-                if (MessageBox.Show($"请注意，所选文件量为{_listResult.Length}个" + "下载将会花费较长时间。", "Notices", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
+                if (MessageBox.Show($"请注意，所选文件量为{_listResult.Length}个" + "下载可能会花费较长时间。", "Notices", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
                     == DialogResult.Cancel)
                 {
                     return;
@@ -86,6 +86,7 @@ namespace T7s_Asset_Downloader
             _downloadDoneList.Clear();
             StartDownload(DOWNLOAD_TYPE.SeletFiles);
         }
+
         private void Button_OpenDownloadPath_Click(object sender, EventArgs e)
         {
             if (!Directory.Exists(Define.GetFileSavePath()))
@@ -121,13 +122,13 @@ namespace T7s_Asset_Downloader
         }
         private void Button_ShowAdvance_Click(object sender, EventArgs e)
         {
-            Advance Advance = new Advance();
-            Advance.Show();
+            var advance = new Advance();
+            advance.Show();
         }
 
         private async void Button_GetNew_Click(object sender, EventArgs e)
         {
-            var UpdateStatus = UPDATE_STATUS.Ok;
+            var updateStatus = UPDATE_STATUS.Ok;
 
             Define.IsGetNewComplete = false;
             button_ReloadAdvance.Enabled = false;
@@ -138,13 +139,13 @@ namespace T7s_Asset_Downloader
                 await Task.Run(async () =>
                 {
                     Define.Rev = Define.UserRev = (Convert.ToInt32(Define.NowRev) + 300).ToString();
-                    UpdateStatus = await StartPost();
+                    updateStatus = await StartPost();
                 });
 
                 await Task.Run(async () =>
                 {
                     Define.Rev = Define.UserRev = "001";
-                    UpdateStatus = await StartPost(true);
+                    updateStatus = await StartPost(true);
                 });
             }
             else
@@ -153,10 +154,10 @@ namespace T7s_Asset_Downloader
                 {
                     Define.LastRev = Define.NowRev;
                     Define.Rev = Define.UserRev = (Convert.ToInt32(Define.NowRev) - 3).ToString();
-                    UpdateStatus = await StartPost();
+                    updateStatus = await StartPost();
                 });
 
-                switch (UpdateStatus)
+                switch (updateStatus)
                 {
                     case UPDATE_STATUS.Error:
                         SetNoticesText("Error", downloadNotice);
@@ -177,7 +178,7 @@ namespace T7s_Asset_Downloader
                 await Task.Run(async () =>
                 {
                     Define.Rev = Define.UserRev = Define.LastRev;
-                    UpdateStatus = await StartPost(true,true);
+                    updateStatus = await StartPost(true,true);
                 });
             }
 
@@ -434,6 +435,7 @@ namespace T7s_Asset_Downloader
             //Start Downlaod
             try
             {
+                Task[] downloaDTask = new Task[totalCount];
                 var cancelToken = CancelSource.Token;
                 var scheduler = new LimitedConcurrencyLevelTaskScheduler(Define.MaxDownloadTasks);
                 var downloadTaskFactory = new TaskFactory(scheduler);
@@ -442,11 +444,11 @@ namespace T7s_Asset_Downloader
                     IsSeveralFiles = true;
                     foreach (var fileName in willDownloadList)
                     {
-                        await downloadTaskFactory.StartNew(async nowFileName =>
+                        downloaDTask[nowFileIndex - 1] = await downloadTaskFactory.StartNew(async nowFileName =>
                         {
                             nowFileIndex++;
                             await DownloadFiles(fileName, nowFileIndex, totalCount, AUTO_DECRYPT.Auto);
-                        }, fileName,cancelToken);
+                        }, fileName, cancelToken);
                     }
                 }
                 else
@@ -456,17 +458,21 @@ namespace T7s_Asset_Downloader
 
                     foreach (var fileName in willDownloadList)
                     {
-                        await downloadTaskFactory.StartNew(async nowFileName =>
+                        downloaDTask[nowFileIndex - 1] = await downloadTaskFactory.StartNew(async nowFileName =>
                         {
                             nowFileIndex++;
                             await downloadTaskFactory.StartNewDelayed((nowFileIndex % 25 == 0)
                                 ? 500
                                 : Define.DownloadTaskSleep);
                             await DownloadFiles(nowFileName.ToString(), nowFileIndex, totalCount, AUTO_DECRYPT.Auto);
-                        }, fileName,cancelToken);
+                        }, fileName, cancelToken);
                     }
                 }
+
                 cancelToken.ThrowIfCancellationRequested();
+
+                //cannot wait in the main thread.
+                //Task.WaitAll(downloaDTask);
             }
             catch (Exception e)
             {
@@ -518,7 +524,9 @@ namespace T7s_Asset_Downloader
                     DecryptFiles.DecryptFile(Define.GetFileSavePath() + fileName);
                 }
             }
+
             OnDownloadDone(totalCount);
+
         }
 
         /// <summary>

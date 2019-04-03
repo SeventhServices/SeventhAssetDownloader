@@ -24,9 +24,11 @@ namespace T7s_Asset_Downloader
 
         public void HttpClientTest(ProgressMessageHandler progressMessageHandler)
         {
-            GetClient = new HttpClient(progressMessageHandler) { BaseAddress = new Uri(Define.Domin) };
-            GetClient.Timeout = new TimeSpan(0, 0, 10);
-
+            GetClient = new HttpClient(progressMessageHandler)
+            {
+                BaseAddress = new Uri(Define.Domin),
+                Timeout = new TimeSpan(0, 0, 10)
+            };
 
             Task.Run(() =>
             {
@@ -41,8 +43,11 @@ namespace T7s_Asset_Downloader
 
         public void _ini_PostClient(ProgressMessageHandler progressMessageHandler)
         {
-            PostClient = new HttpClient(progressMessageHandler) { BaseAddress = new Uri(Define.BaseUrl) };
-            PostClient.Timeout = new TimeSpan(0, 10, 0);
+            PostClient = new HttpClient(progressMessageHandler)
+            {
+                BaseAddress = new Uri(Define.BaseUrl),
+                Timeout = new TimeSpan(0, 10, 0)
+            };
 
             PostClient.DefaultRequestHeaders.Add("Expect", "100-continue");
             PostClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
@@ -50,56 +55,75 @@ namespace T7s_Asset_Downloader
             PostClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
             PostClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
             PostClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+
         }
 
         public async Task<string> MakeGetRequest(string getUrl, string savePath, string fileName)
         {
-            HttpResponseMessage response = await GetClient.GetAsync(getUrl);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                byte[] FileBytes = response.Content.ReadAsByteArrayAsync().Result;
+                var response = await GetClient.GetAsync(getUrl);
 
-                using (FileStream fileStream = File.OpenWrite(savePath + fileName))
+                if (response.IsSuccessStatusCode)
                 {
-                    fileStream.Write(FileBytes, 0, FileBytes.Length);
-                    fileStream.Close();
+                    byte[] FileBytes = response.Content.ReadAsByteArrayAsync().Result;
+
+                    using (FileStream fileStream = File.OpenWrite(savePath + fileName))
+                    {
+                        fileStream.Write(FileBytes, 0, FileBytes.Length);
+                        fileStream.Close();
+                    }
                 }
+                else
+                {
+                    response.EnsureSuccessStatusCode();
+                    MessageBox.Show("文件不存在");
+                }
+
+
+                return fileName;
             }
-            else
+            catch (Exception e)
             {
-                response.EnsureSuccessStatusCode();
-                MessageBox.Show("文件不存在");
+                MessageBox.Show(e.Message);
+                throw;
             }
 
-
-            return fileName;
         }
 
         public async Task<string> MakePostRequest(string id, string apiName, bool save = false)
         {
-            var makeParams = new MakeParams();
-            makeParams.AddSignatureParam(id, apiName);
-            var httpContent = new StringContent(MakeParams.GetParam())
+            try
             {
-                Headers =
+                var makeParams = new MakeParams();
+                makeParams.AddSignatureParam(id, apiName);
+                var httpContent = new StringContent(MakeParams.GetParam())
                 {
-                    ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
+                    Headers =
                     {
-                        CharSet = "utf-8"
+                        ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
+                        {
+                            CharSet = "utf-8"
+                        }
                     }
-                }
-            };
+                };
 
-            var response = PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
-                , httpContent).Result;
-            if (!response.IsSuccessStatusCode)
+                var response = PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                    , httpContent).Result;
+                if (!response.IsSuccessStatusCode)
+                {
+                    response.EnsureSuccessStatusCode();
+                    MessageBox.Show("请求超时");
+                }
+
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception e)
             {
-                response.EnsureSuccessStatusCode();
-                MessageBox.Show("请求超时");
+                MessageBox.Show(e.Message);
+                throw;
             }
 
-            return await response.Content.ReadAsStringAsync();
         }
 
         public async Task<string> MakePostRequest(string id, string apiName, ProgressMessageHandler progressMessageHandler, bool save = false)
