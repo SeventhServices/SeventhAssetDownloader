@@ -20,10 +20,6 @@ namespace T7s_Enc_Decoder
             InitializeComponent();
         }
 
-        private void Main_Load(object sender, EventArgs e)
-        {
-
-        }
 
         private void ChoosePath_Click(object sender, EventArgs e)
         {

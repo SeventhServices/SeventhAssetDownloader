@@ -9,43 +9,43 @@ namespace T7s_Enc_Decoder
 {
     public static class DecryptFiles
     {
-        public static void DecryptFile(string FilePath)
+        public static void DecryptFile(string filePath)
         {
-            byte[] FileBytes;
+            byte[] fileBytes;
 
-            switch (Save.GetFileType(FilePath))
+            switch (Save.GetFileType(filePath))
             {
                 case ENC_TYPE.JPGorPNG :
-                    using (FileStream fileStream = File.OpenWrite(Save.GetSavePath(FilePath)))
+                    using (var fileStream = File.OpenWrite(Save.GetSavePath(filePath)))
                     {
-                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath));
-                        fileStream.Write(FileBytes, 0, FileBytes.Length);
+                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath));
+                        fileStream.Write(fileBytes, 0, fileBytes.Length);
                         fileStream.Close();
                     }
                     break;
                 case ENC_TYPE.TXTorSQLorJSON :
-                    using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(FilePath)))
+                    using (var streamWriter = new StreamWriter(Save.GetSavePath(filePath)))
                     {
-                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath), true);
-                        string FileText = Encoding.UTF8.GetString(FileBytes);
+                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath), true);
+                        string FileText = Encoding.UTF8.GetString(fileBytes);
                         streamWriter.Write(FileText);
                         streamWriter.Close();
                     }
                     break;
                 case ENC_TYPE.BIN :
-                    using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(FilePath)))
+                    using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(filePath)))
                     {
-                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath));
-                        string FileText = Encoding.UTF8.GetString(FileBytes);
+                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath));
+                        string FileText = Encoding.UTF8.GetString(fileBytes);
                         streamWriter.Write(FileText);
                         streamWriter.Close();
                     }
                     break;
                 case ENC_TYPE.UNKONWN:
-                    using (FileStream fileStream = File.OpenWrite(Save.GetSavePath(FilePath)))
+                    using (FileStream fileStream = File.OpenWrite(Save.GetSavePath(filePath)))
                     {
-                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath));
-                        fileStream.Write(FileBytes, 0, FileBytes.Length);
+                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath));
+                        fileStream.Write(fileBytes, 0, fileBytes.Length);
                         fileStream.Close();
                     }
                     break;
@@ -53,14 +53,36 @@ namespace T7s_Enc_Decoder
                     System.Windows.Forms.MessageBox.Show("无法识别");
                     break;
 
+                case ENC_TYPE.ACB:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 
-
+        public static void DecryptForDownloader(string path)
+        {
+            var fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(path), true);
+            using (var streamWriter = new StreamWriter(Save.GetSavePathForDownloader(path)))
+            {
+                string fileText = Encoding.UTF8.GetString(fileBytes);
+                streamWriter.Write(fileText);
+                streamWriter.Close();
+            }
+        }
     }
 
     public static class Save
     {
+        public static string GetSavePathForDownloader(string FilePath)
+        {
+            if (!Directory.Exists(Path.GetDirectoryName(FilePath) + "\\Deconde Files"))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(FilePath) + "\\Deconde Files");
+            }
+            string SavePath = Path.GetDirectoryName(FilePath) + "\\Deconde Files\\" + Path.GetFileName(FilePath);
+            return SavePath;
+        }
         public static string GetSavePath(string FilePath)
         {
             if (!Directory.Exists(Path.GetDirectoryName(FilePath) + "\\Deconde Files"))

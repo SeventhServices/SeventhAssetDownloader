@@ -25,11 +25,11 @@ namespace T7s_Asset_Downloader
             //new MakeRequest().MkaeGetRequest();
             if (File.Exists(Define.GetIndexPath()))
             {
-                Define.jsonParse.LoadUrlIndex( Define.GetIndexPath() );
+                Define.JsonParse.LoadUrlIndex( Define.GetIndexPath() );
             }
             if (File.Exists(Define.GetConfingPath()))
             {
-                Define.jsonParse.LoadConfing(Define.GetConfingPath());
+                Define.JsonParse.LoadConfing(Define.GetConfingPath());
             }
             
             

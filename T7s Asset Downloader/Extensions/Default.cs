@@ -12,7 +12,7 @@ namespace T7s_Asset_Downloader.Extensions
 
         public string GetUrl(string fileName)
         {
-            string UrlPath = Define.jsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
+            string UrlPath = Define.JsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
             return Define.DownloadPath + UrlPath;
         }
     }

@@ -44,7 +44,7 @@ namespace T7s_Enc_Decoder
                 case ENC_TYPE.ERROR:
                     using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(FilePath)))
                     {
-                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath));
+                        FileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(FilePath),true);
                         string FileText = Encoding.UTF8.GetString(FileBytes);
                         streamWriter.Write(FileText);
                         streamWriter.Close();
@@ -54,6 +54,18 @@ namespace T7s_Enc_Decoder
 
             }
         }
+
+        public static void DecryptForDownloader(string path)
+        {
+            var fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(path), true);
+            using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(path)))
+            {
+                string fileText = Encoding.UTF8.GetString(fileBytes);
+                streamWriter.Write(fileText);
+                streamWriter.Close();
+            }
+        }
+
 
         public static void EncryptFile(string FilePath)
         {
@@ -94,7 +106,6 @@ namespace T7s_Enc_Decoder
                     }
                     break;
                 case ENC_TYPE.ERROR:
-
                     System.Windows.Forms.MessageBox.Show("无法识别");
                     break;
 

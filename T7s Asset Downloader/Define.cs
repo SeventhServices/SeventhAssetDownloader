@@ -10,9 +10,11 @@ namespace T7s_Asset_Downloader
 {
     public static class Define
     {
-        public static JsonParse jsonParse = new JsonParse();
+        public static JsonParse JsonParse = new JsonParse();
 
-        public static string LocalPath;
+        public static string LocalPath { get; set; }
+        public static string ApkDownloadPath { get; set; }
+
         public static string BaseUrl = "https://api.t7s.jp/";
         public static string Domin = "https://d2kvktrbzlzxwg.cloudfront.net/";
         public static string Id = "353b3932613b34642c346230672e36366165293e3a31312c3a64356060363030613f3764";
@@ -31,7 +33,7 @@ namespace T7s_Asset_Downloader
         public static NOW_STAUTUS NOW_STAUTUS;
         public static AUTO_DECRYPT AUTO_DECRYPT = AUTO_DECRYPT.Auto;
         public static int DefaultShowCount = 20;
-        public static int MaxDownloadTasks = 3;
+        public static int MaxDownloadTasks = 5;
         public static int DownloadTaskSleep = 300;
         public static bool IsGetNewComplete;
 
@@ -43,29 +45,32 @@ namespace T7s_Asset_Downloader
                 if (Convert.ToInt16(newVersion.VersionCode) <= Convert.ToInt16(Blt)) return;
                 Ver = newVersion.Version;
                 Blt = newVersion.VersionCode;
+                ApkDownloadPath = newVersion.DownloadPath;
             });
         }
 
+
+
         public static void _ini_Coning()
         {
-            DownloadPath = jsonParse.DownloadConfings.Select(p => p.DownloadPath).ToArray()[0];
-            Rev = NowRev = jsonParse.DownloadConfings.Select(p => p.Revision).ToArray()[0];
+            DownloadPath = JsonParse.DownloadConfings.Select(p => p.DownloadPath).ToArray().Last();
+            Rev = NowRev = JsonParse.DownloadConfings.Select(p => p.Revision).ToArray().Last();
         }
 
         public static string GetUrl ( string fileName )
         {
-            string urlPath = jsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
+            string urlPath = JsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
             return DownloadPath + urlPath;
         }
 
         public static string[] GetDefaultNameList()
         {
-            return jsonParse.FileUrls.Select(t => t.Name).ToArray();
+            return JsonParse.FileUrls.Select(t => t.Name).ToArray();
         }
 
-        public static string[] GetListResult(string SearchText)
+        public static string[] GetListResult(string searchText)
         {
-            return jsonParse.FileUrls.Where(p => p.Name.Contains(SearchText)).Select(p => p.Name).ToArray();
+            return JsonParse.FileUrls.Where(p => p.Name.Contains(searchText)).Select(p => p.Name).ToArray();
         }
 
         public static string GetFileSavePath()
@@ -87,6 +92,10 @@ namespace T7s_Asset_Downloader
         {
             return LocalPath + @"\Asset\Index\Temp\Index.json";
         }
+        public static string GetUpdatePath()
+        {
+            return LocalPath + @"\Asset\Index\Temp\Update.json";
+        }
 
         public static string GetAdvanceConfingPath()
         {
@@ -95,7 +104,7 @@ namespace T7s_Asset_Downloader
 
         public static string GetFileDownloadUrl( string fileName )
         {
-            return jsonParse.DownloadConfings.Select(p => p.DownloadPath).ToString();
+            return JsonParse.DownloadConfings.Select(p => p.DownloadPath).ToString();
         }
 
         /// <summary>

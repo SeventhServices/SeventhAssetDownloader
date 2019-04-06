@@ -6,10 +6,28 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using T7s_Enc_Decoder;
+using static System.IO.File;
 
 namespace T7s_Asset_Downloader
 {
+
+    public static class EnumerableExtender
+    {
+        public static IEnumerable<TSource> Distinct<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
+        {
+            HashSet<TKey> seenKeys = new HashSet<TKey>();
+            foreach (TSource element in source)
+            {
+                var elementValue = keySelector(element);
+                if (seenKeys.Add(elementValue))
+                {
+                    yield return element;
+                }
+            }
+        }
+    }
     public class JsonParse
     {
         public class FileUrl
@@ -40,7 +58,7 @@ namespace T7s_Asset_Downloader
 
         private void OnGetComplete()
         {
-            System.Windows.Forms.MessageBox.Show("获取完成", "Notice", System.Windows.Forms.MessageBoxButtons.OK,
+            System.Windows.Forms.MessageBox.Show(@"获取完成", @"Notice", System.Windows.Forms.MessageBoxButtons.OK,
                 System.Windows.Forms.MessageBoxIcon.Information, System.Windows.Forms.MessageBoxDefaultButton.Button1);
         }
 
@@ -73,14 +91,59 @@ namespace T7s_Asset_Downloader
 
         #region Save Data Encrypt Async
 
-        public async void UpdateUrlIndex(JsonParse jsonParse, Task<string> data, bool encrypt)
+        public async void UpdateUrlIndex(JsonParse jsonParse, bool encrypt)
         {
             if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev))
             {
                 Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
             }
+            if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\Temp"))
+            {
+                Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\Temp");
+            }
+            if ((await ParseResultJsonAsync(Define.GetUpdatePath())) == 1)
+            {
+                return;
+            }
 
-            await ParseResultJsonAsync(data);
+            var baseFileUrl = (GetModify())[1].ToString();
+            var tempFileUrl = baseFileUrl.Split('/');
+
+            var downloadPath = new StringBuilder();
+            for (var j = 0; j < 2; j++)
+            {
+                downloadPath.Append(tempFileUrl[j]);
+                downloadPath.Append("/");
+            }
+            
+            jsonParse.DownloadConfings.Add(new DownloadConfing
+            {
+                Revision = ResultJsonObject["updateResource"]["revision"].ToString(),
+                DownloadDomain = ResultJsonObject["updateResource"]["downloadConfig"]["domain"].ToString(),
+                DownloadPath = downloadPath.ToString(),
+                NewDownloadSize = ResultJsonObject["updateResource"]["downloadSize"].ToString(),
+                OneByOneDownloadPath = ResultJsonObject["updateResource"]["downloadConfig"]["oneByOneDownloadPath"].ToString(),
+                SubDomain = ResultJsonObject["updateResource"]["downloadConfig"]["subDomain"].ToString(),
+                ImageRev = ResultJsonObject["updateResource"]["imageRev"].ToString(),
+                ImagePath = ResultJsonObject["updateResource"]["imagePath"].ToString()
+            });
+            var downloadConfing = JsonConvert.SerializeObject(jsonParse.DownloadConfings);
+            using (var fileStream = OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
+            {
+                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(downloadConfing), true);
+                fileStream.Write(fileBytes, 0, fileBytes.Length);
+                fileStream.Close();
+            }
+
+            Define.JsonParse.DownloadConfings.Clear();
+            Define.JsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
+            Define._ini_Coning();
+            DownloadConfings.Clear();
+            Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
+            Copy(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",
+                Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json", true);
+            Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json",
+                Define.GetConfingPath(), true);
 
             ParseModify(false,true,jsonParse);
             ParseModify(true,true,jsonParse);
@@ -90,8 +153,8 @@ namespace T7s_Asset_Downloader
                 DeleteFileUrl(jsonParse,deleteFiles.ToString());
             }
 
-            var urlIndex = JsonConvert.SerializeObject(jsonParse.FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
-            using (var fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
+            var urlIndex = JsonConvert.SerializeObject(jsonParse.FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal).Distinct(f => f.Name));
+            using (var fileStream = OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
             {
                 var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(urlIndex), false, true);
                 fileStream.Write(fileBytes, 0, fileBytes.Length);
@@ -99,10 +162,10 @@ namespace T7s_Asset_Downloader
             }
 
             FileUrls.Clear();
-            Define.jsonParse.FileUrls.Clear();
-            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
+            Define.JsonParse.FileUrls.Clear();
+            Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
                 Define.GetIndexPath(), true);
-            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
+            Define.JsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
             Define.IsGetNewComplete = true;
         }
 
@@ -115,7 +178,10 @@ namespace T7s_Asset_Downloader
 
             ResultJsonObject = null;
 
-            await ParseResultJsonAsync(data);
+            if ((await ParseResultJsonAsync(data)) == 1)
+            {
+                return UPDATE_STATUS.Error;
+            }
 
             var testRev = GetRevOrError();
             if (testRev.Substring(0,1) == "e")
@@ -152,21 +218,21 @@ namespace T7s_Asset_Downloader
                 ImagePath = ResultJsonObject["updateResource"]["imagePath"].ToString()
             });
             var downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
-            using (var fileStream = File.OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
+            using (var fileStream = OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
             {
                 var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(downloadConfing), true, true);
                 fileStream.Write(fileBytes, 0, fileBytes.Length);
                 fileStream.Close();
             }
 
-            Define.jsonParse.DownloadConfings.Clear();
-            Define.jsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
+            Define.JsonParse.DownloadConfings.Clear();
+            Define.JsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
             Define._ini_Coning();
             DownloadConfings.Clear();
             Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
-            File.Copy(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",
+            Copy(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json",
                 Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json", true);
-            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json",
+            Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Confing.json",
                 Define.GetConfingPath(), true);
 
             return UPDATE_STATUS.Ok;
@@ -183,15 +249,20 @@ namespace T7s_Asset_Downloader
 
             ResultJsonObject = null;
 
-            await ParseResultJsonAsync(data);
+            if ((await ParseResultJsonAsync(data)) == 1)
+            {
+                return;
+            }
+
+            GetError();
 
             ParseModify();
             ParseModify(true);
 
             var urlIndex =
-                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal));
+                JsonConvert.SerializeObject(FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal).Distinct());
             using (FileStream fileStream =
-                File.OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
+                OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
             {
                 byte[] fileBytes = Crypt.Encrypt<Byte[]>(Encoding.UTF8.GetBytes(urlIndex), false, true);
                 fileStream.Write(fileBytes, 0, fileBytes.Length);
@@ -199,10 +270,10 @@ namespace T7s_Asset_Downloader
             }
 
             FileUrls.Clear();
-            Define.jsonParse.FileUrls.Clear();
-            File.Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
+            Define.JsonParse.FileUrls.Clear();
+            Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
                 Define.GetIndexPath(), true);
-            Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
+            Define.JsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
             Define.IsGetNewComplete = true;
             //OnGetComplete();
         }
@@ -213,14 +284,14 @@ namespace T7s_Asset_Downloader
 
         public void LoadUrlIndex(string indexPath, bool encrypt)
         {
-            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(indexPath), false, true);
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(ReadAllBytes(indexPath), false, true);
             string fileText = Encoding.UTF8.GetString(fileBytes);
             FileUrls = DeserializeJsonToList(fileText);
         }
 
         public void LoadConfing(string confingPath, bool encrypt)
         {
-            byte[] fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(confingPath), true, true);
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(ReadAllBytes(confingPath),true, true);
             string fileText = Encoding.UTF8.GetString(fileBytes);
             DownloadConfings = DeserializeJsonToList(fileText, true);
         }
@@ -247,23 +318,23 @@ namespace T7s_Asset_Downloader
 
         #region Read Json String Async
 
-        public async Task<UPDATE_STATUS> TestUpdateStatusAsync( Task<string> data)
+        public async Task<UPDATE_STATUS> TestUpdateStatusAsync()
         {
             ResultJsonObject = null;
 
-            await ParseResultJsonAsync(data);
-
+            if (( await ParseResultJsonAsync(Define.GetUpdatePath()) ) == 1)
+            {
+                return UPDATE_STATUS.Error;
+            }
             var testRev = GetRevOrError();
             if (testRev.Substring(0, 1) == "e")
             {
                 return UPDATE_STATUS.Error;
             }
-            else
-            {
-                return Convert.ToInt16(Define.NowRev) >= Convert.ToInt16(testRev) 
-                    ? UPDATE_STATUS.NoNecessary 
-                    : UPDATE_STATUS.Ok;
-            }
+
+            return Convert.ToInt16(Define.NowRev) >= Convert.ToInt16(testRev) 
+                ? UPDATE_STATUS.NoNecessary 
+                : UPDATE_STATUS.Ok;
         }
 
 
@@ -277,6 +348,15 @@ namespace T7s_Asset_Downloader
             var rev = ResultJsonObject["rev"];
             return rev != null ? rev.ToString() :"error";
         }
+
+        public void GetError()
+        {
+            if (ResultJsonObject.Property("error") != null)
+            {
+                MessageBox.Show( $"error:{ResultJsonObject["error"]["errorCode"]}");
+            }
+        }
+
 
         public void ParseModify( bool oneByOneModify = false, bool update = false,
             JsonParse jsonParse = null)
@@ -333,10 +413,13 @@ namespace T7s_Asset_Downloader
         /// <summary>
         /// 异步解析ResultJson
         /// </summary>
-        public async Task ParseResultJsonAsync(Task<string> data)
+        public async Task<int> ParseResultJsonAsync(Task<string> data)
         {
-            string jsonData = await data;
-
+            var jsonData = await data;
+            if (jsonData.Substring(0, 1) == "e")
+            {
+                return 1;
+            }
             using (var stringReader = new StringReader(jsonData))
             {
                 using (var reader = new JsonTextReader(stringReader))
@@ -344,6 +427,20 @@ namespace T7s_Asset_Downloader
                     ResultJsonObject = await JToken.ReadFromAsync(reader) as JObject;
                 }
             }
+
+            return 0;
+        }
+        public async Task<int> ParseResultJsonAsync(string path)
+        {
+            using (var file = OpenText(path))
+            {
+                using (var reader = new JsonTextReader(file))
+                {
+                    ResultJsonObject = await JToken.ReadFromAsync(reader) as JObject;
+                }
+            }
+
+            return 0;
         }
 
         #endregion
@@ -522,7 +619,7 @@ namespace T7s_Asset_Downloader
         {
             string jsonfile = path;
 
-            using (System.IO.StreamReader file = System.IO.File.OpenText(jsonfile))
+            using (System.IO.StreamReader file = OpenText(jsonfile))
             {
                 using (JsonTextReader reader = new JsonTextReader(file))
                 {
@@ -552,7 +649,7 @@ namespace T7s_Asset_Downloader
 
         public void LoadUrlIndex(string indexPath)
         {
-            using (var file = System.IO.File.OpenText(indexPath))
+            using (var file = OpenText(indexPath))
             {
                 FileUrls = DeserializeJsonToList(file.ReadToEnd());
             }
@@ -560,7 +657,7 @@ namespace T7s_Asset_Downloader
 
         public void LoadConfing(string confingPath)
         {
-            using (System.IO.StreamReader file = System.IO.File.OpenText(confingPath))
+            using (System.IO.StreamReader file = OpenText(confingPath))
             {
                 DownloadConfings = DeserializeJsonToList(file.ReadToEnd(), true);
             }

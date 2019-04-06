@@ -33,23 +33,23 @@ namespace T7s_Asset_Downloader
 
         private void Button_LoadAllIndex_Click(object sender, EventArgs e)
         {
-            Define.jsonParse.FileUrls.Clear();
-            Define.jsonParse.LoadUrlIndex(Define.GetAdvanceIndexPath());
+            Define.JsonParse.FileUrls.Clear();
+            Define.JsonParse.LoadUrlIndex(Define.GetAdvanceIndexPath());
         }
 
 
         private void Button_LoadConfing_Click(object sender, EventArgs e)
         {
-            Define.jsonParse.DownloadConfings.Clear();
-            Define.jsonParse.LoadConfing(Define.GetAdvanceConfingPath());
+            Define.JsonParse.DownloadConfings.Clear();
+            Define.JsonParse.LoadConfing(Define.GetAdvanceConfingPath());
             Define._ini_Coning();
 
         }
 
         private void Button_LoadToNewIndex_Click(object sender, EventArgs e)
         {
-            Define.jsonParse.FileUrls.Clear();
-            Define.jsonParse.LoadUrlIndex(Define.GetAdvanceIndexPath());
+            Define.JsonParse.FileUrls.Clear();
+            Define.JsonParse.LoadUrlIndex(Define.GetAdvanceIndexPath());
         }
 
         private void Button_GetToNewIndex_Click(object sender, EventArgs e)

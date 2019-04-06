@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -23,14 +24,15 @@ namespace T7s_Asset_Downloader
         {
             var request = new MakeRequest();
             request.HttpClientTest(_downloadProcessMessageHandler);
+
             if (File.Exists(Define.GetIndexPath()))
             {
-                Define.jsonParse.LoadUrlIndex(Define.GetIndexPath(), true);
+                Define.JsonParse.LoadUrlIndex(Define.GetIndexPath(), true);
                 _ini_listResult();
                 button_LoadAllResult.Enabled = true;
                 if (File.Exists(Define.GetConfingPath()))
                 {
-                    Define.jsonParse.LoadConfing(Define.GetConfingPath(), true);
+                    Define.JsonParse.LoadConfing(Define.GetConfingPath(), true);
                     Define._ini_Coning();
                 }
                 else
@@ -142,6 +144,21 @@ namespace T7s_Asset_Downloader
                     updateStatus = await StartPost();
                 });
 
+                switch (updateStatus)
+                {
+                    case UPDATE_STATUS.Error:
+                        SetNoticesText(">> Error : 游戏服务器可能在维护中，请稍后重试", downloadNotice);
+                        SetButtomEnabled(true, button_GetNew);
+                        SetButtomEnabled(true, button_ReloadAdvance);
+                        return;
+                    case UPDATE_STATUS.Ok:
+                        break;
+                    case UPDATE_STATUS.NoNecessary:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
                 await Task.Run(async () =>
                 {
                     Define.Rev = Define.UserRev = "001";
@@ -160,7 +177,7 @@ namespace T7s_Asset_Downloader
                 switch (updateStatus)
                 {
                     case UPDATE_STATUS.Error:
-                        SetNoticesText("Error", downloadNotice);
+                        SetNoticesText(">> Error : 游戏服务器可能在维护中，请稍后重试", downloadNotice);
                         SetButtomEnabled(true, button_GetNew);
                         SetButtomEnabled(true, button_ReloadAdvance);
                         return;
@@ -342,7 +359,6 @@ namespace T7s_Asset_Downloader
                 SetProgressInt(NowProcess);
             }).Wait();
         }
-
         private async void TestNew()
         {
             _request._ini_PostClient(_postProcessMessageHandler);
@@ -357,8 +373,11 @@ namespace T7s_Asset_Downloader
             var updateStatus = await Task.Run(async () =>
             {
                 Define.Rev = Define.UserRev = Define.NowRev;
-                return await Define.jsonParse.TestUpdateStatusAsync(_request.MakePostRequest(
-                        Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)));
+                if (await _request.MakeUpdatePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)) == 0)
+                {
+                    return await Define.JsonParse.TestUpdateStatusAsync();
+                }
+                return UPDATE_STATUS.Error;
             });
 
             switch (updateStatus)
@@ -370,11 +389,21 @@ namespace T7s_Asset_Downloader
                     SetNoticesText(">> 已经是最新版本 ", downloadNotice);
                     return;
                 case UPDATE_STATUS.Ok:
-                    if ((MessageBox.Show(" 检测到最新版本 , 请问是否要现在更新 "
-                            , "Notice"
+                    if ((MessageBox.Show(@" 检测到最新版本 , 请问是否要现在更新 "
+                            , @"Notice"
                             , MessageBoxButtons.OKCancel)) == DialogResult.OK)
                     {
-                        Button_GetNew_Click(null, null);
+                        Define.JsonParse.UpdateUrlIndex(Define.JsonParse, true);
+                        await Task.Run(() =>
+                        {
+                            while (Define.IsGetNewComplete == false) { }
+                            Define.NOW_STAUTUS = NOW_STAUTUS.Normal;
+                            SetNoticesText(">> 就绪 ...", downloadNotice);
+                            ReloadNoticeLabels();
+                            SetButtomEnabled(true, button_GetNew);
+                            SetButtomEnabled(true, button_ReloadAdvance);
+                            _ini_listResult();
+                        });
                     }
                     else
                     {
@@ -435,7 +464,6 @@ namespace T7s_Asset_Downloader
             //Start Downlaod
             try
             {
-                Task[] downloaDTask = new Task[totalCount];
                 var cancelToken = CancelSource.Token;
                 var scheduler = new LimitedConcurrencyLevelTaskScheduler(Define.MaxDownloadTasks);
                 var downloadTaskFactory = new TaskFactory(scheduler);
@@ -444,11 +472,11 @@ namespace T7s_Asset_Downloader
                     IsSeveralFiles = true;
                     foreach (var fileName in willDownloadList)
                     {
-                        downloaDTask[nowFileIndex - 1] = await downloadTaskFactory.StartNew(async nowFileName =>
+                        await downloadTaskFactory.StartNew(async nowFileName =>
                         {
                             nowFileIndex++;
                             await DownloadFiles(fileName, nowFileIndex, totalCount, AUTO_DECRYPT.Auto);
-                        }, fileName, cancelToken);
+                        }, fileName);
                     }
                 }
                 else
@@ -458,10 +486,10 @@ namespace T7s_Asset_Downloader
 
                     foreach (var fileName in willDownloadList)
                     {
-                        downloaDTask[nowFileIndex - 1] = await downloadTaskFactory.StartNew(async nowFileName =>
+                        await downloadTaskFactory.StartNew(async nowFileName =>
                         {
                             nowFileIndex++;
-                            await downloadTaskFactory.StartNewDelayed((nowFileIndex % 25 == 0)
+                            Thread.Sleep((nowFileIndex % 25 == 0)
                                 ? 500
                                 : Define.DownloadTaskSleep);
                             await DownloadFiles(nowFileName.ToString(), nowFileIndex, totalCount, AUTO_DECRYPT.Auto);
@@ -470,9 +498,6 @@ namespace T7s_Asset_Downloader
                 }
 
                 cancelToken.ThrowIfCancellationRequested();
-
-                //cannot wait in the main thread.
-                //Task.WaitAll(downloaDTask);
             }
             catch (Exception e)
             {
@@ -533,6 +558,7 @@ namespace T7s_Asset_Downloader
         /// Main post method
         /// </summary>
         /// <param name="index"></param>
+        /// <param name="update"></param>
         private async Task<UPDATE_STATUS> StartPost(bool index = false , bool update = false)
         {
             SetNoticesText("正在获取新版本数据 ...请稍等..." , downloadNotice);
@@ -547,21 +573,21 @@ namespace T7s_Asset_Downloader
                 return await jsonParse.SaveDlConfing(
                 _request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
             }
+
+            if (update)
+            {
+                if (await _request.MakeUpdatePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)) == 0)
+                {
+                    Define.JsonParse.UpdateUrlIndex(Define.JsonParse, true);
+                }
+            }
             else
             {
-                if (update)
-                {
-                    jsonParse.UpdateUrlIndex(Define.jsonParse,
-                        _request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
-                }
-                else
-                {
-                    jsonParse.SaveUrlIndex(
+                jsonParse.SaveUrlIndex(
                     _request.MakePostRequest(Define.Id, Define.GetApiName(Define.APINAME_TYPE.result)), true);
-                }
-
-                return UPDATE_STATUS.Ok;
             }
+
+            return UPDATE_STATUS.Ok;
         }
 
         /// <summary>

@@ -12,6 +12,7 @@ using T7s_Sig_Counter;
 using System.Net.Http.Headers;
 using System.Net.Http.Handlers;
 using System.Threading;
+using Newtonsoft.Json.Serialization;
 
 namespace T7s_Asset_Downloader
 {
@@ -66,11 +67,11 @@ namespace T7s_Asset_Downloader
 
                 if (response.IsSuccessStatusCode)
                 {
-                    byte[] FileBytes = response.Content.ReadAsByteArrayAsync().Result;
+                    var fileBytes = response.Content.ReadAsByteArrayAsync().Result;
 
-                    using (FileStream fileStream = File.OpenWrite(savePath + fileName))
+                    using (var fileStream = File.OpenWrite(savePath + fileName))
                     {
-                        fileStream.Write(FileBytes, 0, FileBytes.Length);
+                        await fileStream.WriteAsync(fileBytes, 0, fileBytes.Length);
                         fileStream.Close();
                     }
                 }
@@ -85,13 +86,13 @@ namespace T7s_Asset_Downloader
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message);
+                Console.WriteLine(e);
                 throw;
             }
 
         }
 
-        public async Task<string> MakePostRequest(string id, string apiName, bool save = false)
+        public async Task<int> MakeUpdatePostRequest(string id, string apiName)
         {
             try
             {
@@ -108,15 +109,63 @@ namespace T7s_Asset_Downloader
                     }
                 };
 
-                var response = PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
-                    , httpContent).Result;
-                if (!response.IsSuccessStatusCode)
+                var response = await PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                    , httpContent);
+                if (response.IsSuccessStatusCode)
                 {
-                    response.EnsureSuccessStatusCode();
-                    MessageBox.Show("请求超时");
-                }
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    using (var streamWriter = new StreamWriter(Define.GetUpdatePath()))
+                    {
+                        streamWriter.Write(jsonString);
+                        streamWriter.Close();
+                    }
 
-                return await response.Content.ReadAsStringAsync();
+                    return 0;
+                }
+                response.EnsureSuccessStatusCode();
+                return 1;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                throw;
+            }
+
+        }
+
+        public async Task<string> MakePostRequest(string id, string apiName, bool update = false)
+        {
+            try
+            {
+                var makeParams = new MakeParams();
+                makeParams.AddSignatureParam(id, apiName);
+                var httpContent = new StringContent(MakeParams.GetParam())
+                {
+                    Headers =
+                    {
+                        ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
+                        {
+                            CharSet = "utf-8"
+                        }
+                    }
+                };
+
+                var response = await PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                    , httpContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    if (!update)
+                        return jsonString;
+                    using (var streamWriter = new StreamWriter(Define.GetUpdatePath()))
+                    {
+                        streamWriter.Write(jsonString);
+                        streamWriter.Close();
+                    }
+                }
+                response.EnsureSuccessStatusCode();
+                MessageBox.Show(@"请求超时");
+                return "complete";
             }
             catch (Exception e)
             {
