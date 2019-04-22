@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using System.Threading.Tasks;
+using T7s_Asset_Downloader;
 
 namespace T7s_Enc_Decoder
 {
     public static class DecryptFiles
     {
-        public static void DecryptFile(string filePath)
+        public static void DecryptFile(string filePath, EncVersion encVersion)
         {
             byte[] fileBytes;
 
@@ -18,7 +19,7 @@ namespace T7s_Enc_Decoder
                 case ENC_TYPE.JPGorPNG :
                     using (var fileStream = File.OpenWrite(Save.GetSavePath(filePath)))
                     {
-                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath));
+                        fileBytes = Crypt.Decrypt(File.ReadAllBytes(filePath),false, encVersion);
                         fileStream.Write(fileBytes, 0, fileBytes.Length);
                         fileStream.Close();
                     }
@@ -26,31 +27,31 @@ namespace T7s_Enc_Decoder
                 case ENC_TYPE.TXTorSQLorJSON :
                     using (var streamWriter = new StreamWriter(Save.GetSavePath(filePath)))
                     {
-                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath), true);
-                        string FileText = Encoding.UTF8.GetString(fileBytes);
-                        streamWriter.Write(FileText);
+                        fileBytes = Crypt.Decrypt(File.ReadAllBytes(filePath), true, encVersion);
+                        var fileText = Encoding.UTF8.GetString(fileBytes).Replace("\r","");
+                        streamWriter.Write(fileText);
                         streamWriter.Close();
                     }
                     break;
                 case ENC_TYPE.BIN :
-                    using (StreamWriter streamWriter = new StreamWriter(Save.GetSavePath(filePath)))
+                    using (var streamWriter = new StreamWriter(Save.GetSavePath(filePath)))
                     {
-                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath));
-                        string FileText = Encoding.UTF8.GetString(fileBytes);
-                        streamWriter.Write(FileText);
+                        fileBytes = Crypt.Decrypt(File.ReadAllBytes(filePath),false,encVersion);
+                        var fileText = Encoding.UTF8.GetString(fileBytes);
+                        streamWriter.Write(fileText);
                         streamWriter.Close();
                     }
                     break;
                 case ENC_TYPE.UNKONWN:
-                    using (FileStream fileStream = File.OpenWrite(Save.GetSavePath(filePath)))
+                    using (var fileStream = File.OpenWrite(Save.GetSavePath(filePath)))
                     {
-                        fileBytes = Crypt.Decrypt<Byte[]>(System.IO.File.ReadAllBytes(filePath));
+                        fileBytes = Crypt.Decrypt(File.ReadAllBytes(filePath),false,encVersion);
                         fileStream.Write(fileBytes, 0, fileBytes.Length);
                         fileStream.Close();
                     }
                     break;
                 case ENC_TYPE.ERROR:
-                    System.Windows.Forms.MessageBox.Show("无法识别");
+                    System.Windows.Forms.MessageBox.Show(@"无法识别");
                     break;
 
                 case ENC_TYPE.ACB:

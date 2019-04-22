@@ -19,13 +19,14 @@ namespace T7s_Asset_Downloader
     internal class MakeRequest
     {
         #region Http
-        private static HttpClient GetClient;
-        private static HttpClient PostClient;
+        private static HttpClient _getClient;
+        private static HttpClient _singleGetClient;
+        private static HttpClient _postClient;
         //private static ManualResetEvent ManualResetEvent = new ManualResetEvent(true);
 
         public void HttpClientTest(ProgressMessageHandler progressMessageHandler)
         {
-            GetClient = new HttpClient(progressMessageHandler)
+            _getClient = new HttpClient(progressMessageHandler)
             {
                 BaseAddress = new Uri(Define.Domin),
                 Timeout = new TimeSpan(0, 0, 10)
@@ -33,7 +34,7 @@ namespace T7s_Asset_Downloader
 
             Task.Run(() =>
             {
-                GetClient.SendAsync(new HttpRequestMessage
+                _getClient.SendAsync(new HttpRequestMessage
                 {
                     Method = new HttpMethod("POST"),
                     RequestUri = new Uri(Define.BaseUrl + Define.GetApiName(Define.APINAME_TYPE.inspection))
@@ -41,29 +42,68 @@ namespace T7s_Asset_Downloader
             });
 
         }
-
-        public void _ini_PostClient(ProgressMessageHandler progressMessageHandler)
+        public void _ini_GetClient()
         {
-            PostClient = new HttpClient(progressMessageHandler)
+            _singleGetClient = new HttpClient();
+        }
+        public void _ini_PostClient()
+        {
+            _postClient = new HttpClient()
             {
                 BaseAddress = new Uri(Define.BaseUrl),
                 Timeout = new TimeSpan(0, 10, 0)
             };
 
-            PostClient.DefaultRequestHeaders.Add("Expect", "100-continue");
-            PostClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
-            PostClient.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
-            PostClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
-            PostClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
-            PostClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+            _postClient.DefaultRequestHeaders.Add("Expect", "100-continue");
+            _postClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
+            _postClient.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
+            _postClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
+            _postClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
+            _postClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
+        }
+        public async Task<string> MakeSingleGetRequest(string getUrl, string savePath, string fileName)
+        {
+            if (!Directory.Exists(savePath))
+            {
+                Directory.CreateDirectory(savePath);
+            }
+
+            try
+            {
+                var response = await _singleGetClient.GetAsync(getUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var fileBytes = response.Content.ReadAsByteArrayAsync().Result;
+
+                    using (var fileStream = File.OpenWrite(savePath + fileName))
+                    {
+                        await fileStream.WriteAsync(fileBytes, 0, fileBytes.Length);
+                        fileStream.Close();
+                    }
+                }
+                else
+                {
+                    response.EnsureSuccessStatusCode();
+                    MessageBox.Show("文件不存在");
+                }
+
+                return fileName;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
 
         }
+
 
         public async Task<string> MakeGetRequest(string getUrl, string savePath, string fileName)
         {
             try
             {
-                var response = await GetClient.GetAsync(getUrl);
+                var response = await _getClient.GetAsync(getUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -96,9 +136,12 @@ namespace T7s_Asset_Downloader
         {
             try
             {
-                var makeParams = new MakeParams();
-                makeParams.AddSignatureParam(id, apiName);
-                var httpContent = new StringContent(MakeParams.GetParam())
+                var Params = new MakeParams();
+                Params.AddParam("userRev", Define.UserRev);
+                Params.AddCommonParams();
+                Params.AddParam("pid", SaveData.Decrypt(Define.encPid));
+                Params.AddSignatureParam(id, apiName);
+                var httpContent = new StringContent(Params.GetParam())
                 {
                     Headers =
                     {
@@ -109,7 +152,7 @@ namespace T7s_Asset_Downloader
                     }
                 };
 
-                var response = await PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                var response = await _postClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
                     , httpContent);
                 if (response.IsSuccessStatusCode)
                 {
@@ -138,8 +181,11 @@ namespace T7s_Asset_Downloader
             try
             {
                 var makeParams = new MakeParams();
+                makeParams.AddParam("userRev", Define.UserRev);
+                makeParams.AddCommonParams();
+                makeParams.AddParam("pid", SaveData.Decrypt(Define.encPid));
                 makeParams.AddSignatureParam(id, apiName);
-                var httpContent = new StringContent(MakeParams.GetParam())
+                var httpContent = new StringContent(makeParams.GetParam())
                 {
                     Headers =
                     {
@@ -150,7 +196,7 @@ namespace T7s_Asset_Downloader
                     }
                 };
 
-                var response = await PostClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                var response = await _postClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
                     , httpContent);
                 if (response.IsSuccessStatusCode)
                 {
@@ -163,8 +209,12 @@ namespace T7s_Asset_Downloader
                         streamWriter.Close();
                     }
                 }
-                response.EnsureSuccessStatusCode();
-                MessageBox.Show(@"请求超时");
+                else
+                {
+                    response.EnsureSuccessStatusCode();
+                    MessageBox.Show(@"请求超时");
+                }
+
                 return "complete";
             }
             catch (Exception e)
@@ -172,15 +222,53 @@ namespace T7s_Asset_Downloader
                 MessageBox.Show(e.Message);
                 throw;
             }
-
         }
+        public async Task<int> MakeNaturalPostRequest(string apiname, string param )
+        {
+            try
+            {
+                var httpContent = new StringContent(param)
+                {
+                    Headers =
+                    {
+                        ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
+                        {
+                            CharSet = "utf-8"
+                        }
+                    }
+                };
 
+                var response = await _postClient.PostAsync(apiname
+                    , httpContent);
+                if (response.IsSuccessStatusCode)
+                {
+                    var jsonString = await response.Content.ReadAsStringAsync();
+                    using (var streamWriter = new StreamWriter(Define.GetExtensionsTempPath()))
+                    {
+                        streamWriter.Write(jsonString);
+                        streamWriter.Close();
+                    }
+                }
+                else
+                {
+                    response.EnsureSuccessStatusCode();
+                    MessageBox.Show(@"请求超时");
+                }
+
+                return 0;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message);
+                throw;
+            }
+        }
         public async Task<string> MakePostRequest(string id, string apiName, ProgressMessageHandler progressMessageHandler, bool save = false)
         {
             return await Task.Run(async () => {
                 var makeParams = new MakeParams();
                 makeParams.AddSignatureParam(id, apiName);
-                HttpContent httpContent = new StringContent(MakeParams.GetParam());
+                HttpContent httpContent = new StringContent(makeParams.GetParam());
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
                 {
                     CharSet = "utf-8"
@@ -256,7 +344,7 @@ namespace T7s_Asset_Downloader
         {
             MakeParams makeParams = new MakeParams();
             makeParams.AddSignatureParam(id, apiName);
-            byte[] PrarmsBytes = Encoding.UTF8.GetBytes(MakeParams.GetParam());
+            byte[] PrarmsBytes = Encoding.UTF8.GetBytes(makeParams.GetParam());
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(postUrl));
             request.Method = "POST";
 

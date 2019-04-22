@@ -19,9 +19,9 @@ namespace T7s_Asset_Downloader
         public static string Domin = "https://d2kvktrbzlzxwg.cloudfront.net/";
         public static string Id = "353b3932613b34642c346230672e36366165293e3a31312c3a64356060363030613f3764";
         public static string encPid = "36323335313138";
-        public static string Ver = "6.1.0";
-        public static string Rev = "297";
-        public static string Blt = "135";
+        public static string Ver = "6.2.2";
+        public static string Rev = "310";
+        public static string Blt = "139";
         public static string UserRev = "297";
         
 
@@ -37,9 +37,9 @@ namespace T7s_Asset_Downloader
         public static int DownloadTaskSleep = 300;
         public static bool IsGetNewComplete;
 
-        public static async void SetNewVersion()
+        public static Task SetNewVersion()
         {
-            await Task.Run(() =>
+            return new Task(() =>
             {
                 var newVersion = GetVersion.GetNewVersion();
                 if (Convert.ToInt16(newVersion.VersionCode) <= Convert.ToInt16(Blt)) return;
@@ -97,6 +97,16 @@ namespace T7s_Asset_Downloader
             return LocalPath + @"\Asset\Index\Temp\Update.json";
         }
 
+        public static string GetTempPath()
+        {
+            return LocalPath + @"\Asset\Index\Temp\Temp.json";
+        }
+
+        public static string GetExtensionsSavePath()
+        {
+            return LocalPath + @"\Asset\Extensions\Download\";
+        }
+
         public static string GetAdvanceConfingPath()
         {
             return LocalPath + @"\Asset\Index\Temp\Confing.json";
@@ -105,6 +115,16 @@ namespace T7s_Asset_Downloader
         public static string GetFileDownloadUrl( string fileName )
         {
             return JsonParse.DownloadConfings.Select(p => p.DownloadPath).ToString();
+        }
+
+        public static string GetExtensionsPath()
+        {
+            return LocalPath + @"\Asset\Extensions\";
+        }
+
+        public static string GetExtensionsTempPath()
+        {
+            return LocalPath + @"\Asset\Extensions\Temp\Temp.json";
         }
 
         /// <summary>
@@ -122,6 +142,35 @@ namespace T7s_Asset_Downloader
                     return "setup/resource/result";
                 case APINAME_TYPE.inspection:
                     return "inspection";
+                case APINAME_TYPE.first:
+                    return "setup/first";
+                case APINAME_TYPE.comp:
+                    return "setup/comp";
+                case APINAME_TYPE.gacha_main:
+                    return "gacha/main";
+                case APINAME_TYPE.gacha_result:
+                    return "gacha/result";
+                case APINAME_TYPE.tutorial_chara:
+                    return "tutorial/chara";
+                case APINAME_TYPE.tutorial_name:
+                    return "tutorial/name";
+                case APINAME_TYPE.tutorial_type:
+                    return "tutorial/type";
+                case APINAME_TYPE.tutorial_end:
+                    return "tutorial/end";
+                case APINAME_TYPE.tutorial_questionnaire:
+                    return "tutorial/questionnaire";
+                case APINAME_TYPE.tutorial_beginner:
+                    return "tutorial/beginner";
+
+                case APINAME_TYPE.event_ranking_user:
+                    return "event/ranking/user";
+
+                case APINAME_TYPE.episode_main:
+                    return "episode/main";
+                case APINAME_TYPE.scenario_result:
+                    return "scenario/result";
+
                 default:
                     return "inspection";
             }
@@ -143,7 +192,22 @@ namespace T7s_Asset_Downloader
             /// <summary>
             /// setup/resource/result
             /// </summary>
-            inspection
+            inspection,
+            first,
+            comp,
+            gacha_main,
+            gacha_result,
+            tutorial_chara,
+            tutorial_name,
+            tutorial_type,
+            tutorial_end,
+            tutorial_questionnaire,
+            tutorial_beginner,
+
+            event_ranking_user,
+
+            episode_main,
+            scenario_result
         }
     }
 

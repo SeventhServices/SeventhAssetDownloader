@@ -22,17 +22,18 @@ namespace T7s_Asset_Downloader
         }
         private void Main_Load(object sender, EventArgs e)
         {
+            _setNewVersion.Start();
             var request = new MakeRequest();
             request.HttpClientTest(_downloadProcessMessageHandler);
 
             if (File.Exists(Define.GetIndexPath()))
             {
-                Define.JsonParse.LoadUrlIndex(Define.GetIndexPath(), true);
+                Define.JsonParse.LoadUrlIndex(Define.GetIndexPath());
                 _ini_listResult();
                 button_LoadAllResult.Enabled = true;
                 if (File.Exists(Define.GetConfingPath()))
                 {
-                    Define.JsonParse.LoadConfing(Define.GetConfingPath(), true);
+                    Define.JsonParse.LoadConfing(Define.GetConfingPath());
                     Define._ini_Coning();
                 }
                 else
@@ -48,7 +49,6 @@ namespace T7s_Asset_Downloader
                 Define.NOW_STAUTUS = NOW_STAUTUS.NoneIndex;
                 Define.NOW_STAUTUS = NOW_STAUTUS.First;
             }
-
             TestNew();
             ReloadNoticeLabels();
         }
@@ -64,6 +64,7 @@ namespace T7s_Asset_Downloader
         public bool IsSeveralFiles = true;
         private readonly List<string> _downloadDoneList = new List<string>();
         private readonly MakeRequest _request = new MakeRequest();
+        private readonly Task _setNewVersion = Define.SetNewVersion();
 
         #region UI逻辑
 
@@ -74,7 +75,7 @@ namespace T7s_Asset_Downloader
             _downloadDoneList.Clear();
             if (_listResult.Length > 50)
             {
-                if (MessageBox.Show($"请注意，所选文件量为{_listResult.Length}个" + "下载可能会花费较长时间。", "Notices", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
+                if (MessageBox.Show($@"请注意，所选文件量为{_listResult.Length}个" + @"下载可能会花费较长时间。", @"Notices", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2)
                     == DialogResult.Cancel)
                 {
                     return;
@@ -240,11 +241,11 @@ namespace T7s_Asset_Downloader
             };
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                jsonParse.LoadUrlIndex(ofd.FileName, true);
+                jsonParse.LoadUrlIndex(ofd.FileName);
                 namesList1 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
                 if (ofd.ShowDialog() == DialogResult.OK)
                 {
-                    jsonParse.LoadUrlIndex(ofd.FileName, true);
+                    jsonParse.LoadUrlIndex(ofd.FileName);
                     namesList2 = jsonParse.FileUrls.Select(t => t.Name).ToArray();
                 }
                 else
@@ -258,7 +259,6 @@ namespace T7s_Asset_Downloader
             }
 
             Define.DiifList = namesList1.Except(namesList2).ToArray();
-            namesList1 = namesList2 = null;
             _listResult = Define.DiifList;
             listBoxResult.Items.Clear();
             ShowlistResult(Define.DiifList, Define.DiifList.Length);
@@ -361,14 +361,22 @@ namespace T7s_Asset_Downloader
         }
         private async void TestNew()
         {
-            _request._ini_PostClient(_postProcessMessageHandler);
+            SetNoticesText(">> ... 正在查询游戏最新版本信息", downloadNotice);
+            await _setNewVersion;
+
+            _request._ini_PostClient();
             if (Define.NOW_STAUTUS == NOW_STAUTUS.First)
             {
-                SetNoticesText(">> 需要获取一次完整索引文件，请点击获取最新版本", downloadNotice);
-                return;
+                if ((MessageBox.Show(@" 需要获取一次完整索引文件，可能下载较长时间，是否现在下载 "
+                        , @"Notice"
+                        , MessageBoxButtons.OKCancel)) != DialogResult.OK)
+                {
+                    SetNoticesText(">> 需要获取一次完整索引文件，请点击获取最新版本", downloadNotice);
+                    return;
+                }
             }
 
-            SetNoticesText(">> ... 正在自动检测最新版本 , 请稍等 ",downloadNotice);
+            SetNoticesText(">> ... 正在自动检测数据最新版本 , 请稍等 ",downloadNotice);
 
             var updateStatus = await Task.Run(async () =>
             {
@@ -445,7 +453,7 @@ namespace T7s_Asset_Downloader
                     totalCount = listBoxResult.SelectedItems.Count;
                     if (totalCount < 1)
                     {
-                        MessageBox.Show("未选择要下载的文件，请点击选择某项或多项文件，再开始下载。", "Notice");
+                        MessageBox.Show(@"未选择要下载的文件，请点击选择某项或多项文件，再开始下载。", "Notice");
                         button_DownloadCancel.Visible = false;
                         return;
                     }
@@ -546,7 +554,7 @@ namespace T7s_Asset_Downloader
             {
                 if (Save.GetFileType(fileName) != ENC_TYPE.ERROR)
                 {
-                    DecryptFiles.DecryptFile(Define.GetFileSavePath() + fileName);
+                    DecryptFiles.DecryptFile(Define.GetFileSavePath() + fileName, Crypt.IdentifyEncVersion(fileName));
                 }
             }
 
@@ -562,10 +570,10 @@ namespace T7s_Asset_Downloader
         private async Task<UPDATE_STATUS> StartPost(bool index = false , bool update = false)
         {
             SetNoticesText("正在获取新版本数据 ...请稍等..." , downloadNotice);
-            JsonParse jsonParse = new JsonParse();
+            var jsonParse = new JsonParse();
             _postProcessMessageHandler.HttpSendProgress += (senders, es) =>
             {
-                int num = es.ProgressPercentage;
+                var num = es.ProgressPercentage;
                 SetProgressInt(num);
             };
             if (!index)
@@ -599,7 +607,7 @@ namespace T7s_Asset_Downloader
         {
             Task.Run(() =>
             {
-                for (int i = 0; i < showCount; i++)
+                for (var i = 0; i < showCount; i++)
                 {
                     SetlistResult(nameList[i]);
                 }

@@ -12,7 +12,6 @@ using static System.IO.File;
 
 namespace T7s_Asset_Downloader
 {
-
     public static class EnumerableExtender
     {
         public static IEnumerable<TSource> Distinct<TSource, TKey>(this IEnumerable<TSource> source, Func<TSource, TKey> keySelector)
@@ -91,7 +90,7 @@ namespace T7s_Asset_Downloader
 
         #region Save Data Encrypt Async
 
-        public async void UpdateUrlIndex(JsonParse jsonParse, bool encrypt)
+        public async void UpdateUrlIndex(JsonParse jsonParse , bool first = false)
         {
             if (!Directory.Exists(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev))
             {
@@ -130,13 +129,13 @@ namespace T7s_Asset_Downloader
             var downloadConfing = JsonConvert.SerializeObject(jsonParse.DownloadConfings);
             using (var fileStream = OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
             {
-                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(downloadConfing), true);
+                var fileBytes = Encoding.UTF8.GetBytes(downloadConfing);
                 fileStream.Write(fileBytes, 0, fileBytes.Length);
                 fileStream.Close();
             }
 
             Define.JsonParse.DownloadConfings.Clear();
-            Define.JsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json", encrypt);
+            Define.JsonParse.LoadConfing(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json");
             Define._ini_Coning();
             DownloadConfings.Clear();
             Directory.CreateDirectory(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev);
@@ -148,15 +147,18 @@ namespace T7s_Asset_Downloader
             ParseModify(false,true,jsonParse);
             ParseModify(true,true,jsonParse);
 
-            foreach (var deleteFiles in GetModify(false,true))
+            if (first == false)
             {
-                DeleteFileUrl(jsonParse,deleteFiles.ToString());
+                foreach (var deleteFiles in GetModify(false, true))
+                {
+                    DeleteFileUrl(jsonParse, deleteFiles.ToString());
+                }
             }
 
             var urlIndex = JsonConvert.SerializeObject(jsonParse.FileUrls.OrderBy((FileUrl e) => e.Name, StringComparer.Ordinal).Distinct(f => f.Name));
             using (var fileStream = OpenWrite(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json"))
             {
-                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(urlIndex), false, true);
+                var fileBytes = Encoding.UTF8.GetBytes(urlIndex);
                 fileStream.Write(fileBytes, 0, fileBytes.Length);
                 fileStream.Close();
             }
@@ -165,7 +167,7 @@ namespace T7s_Asset_Downloader
             Define.JsonParse.FileUrls.Clear();
             Copy(Define.LocalPath + @"\Asset\Index\" + "r" + Define.NowRev + @"\Index.json",
                 Define.GetIndexPath(), true);
-            Define.JsonParse.LoadUrlIndex(Define.GetIndexPath(), encrypt);
+            Define.JsonParse.LoadUrlIndex(Define.GetIndexPath());
             Define.IsGetNewComplete = true;
         }
 
@@ -218,9 +220,10 @@ namespace T7s_Asset_Downloader
                 ImagePath = ResultJsonObject["updateResource"]["imagePath"].ToString()
             });
             var downloadConfing = JsonConvert.SerializeObject(DownloadConfings);
+
             using (var fileStream = OpenWrite(Define.LocalPath + @"\Asset\Index\Temp" + @"\Confing.json"))
             {
-                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(downloadConfing), true, true);
+                var fileBytes = Crypt.Encrypt(Encoding.UTF8.GetBytes(downloadConfing), true);
                 fileStream.Write(fileBytes, 0, fileBytes.Length);
                 fileStream.Close();
             }
@@ -284,14 +287,14 @@ namespace T7s_Asset_Downloader
 
         public void LoadUrlIndex(string indexPath, bool encrypt)
         {
-            byte[] fileBytes = Crypt.Decrypt<Byte[]>(ReadAllBytes(indexPath), false, true);
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(ReadAllBytes(indexPath), false);
             string fileText = Encoding.UTF8.GetString(fileBytes);
             FileUrls = DeserializeJsonToList(fileText);
         }
 
         public void LoadConfing(string confingPath, bool encrypt)
         {
-            byte[] fileBytes = Crypt.Decrypt<Byte[]>(ReadAllBytes(confingPath),true, true);
+            byte[] fileBytes = Crypt.Decrypt<Byte[]>(ReadAllBytes(confingPath),true);
             string fileText = Encoding.UTF8.GetString(fileBytes);
             DownloadConfings = DeserializeJsonToList(fileText, true);
         }

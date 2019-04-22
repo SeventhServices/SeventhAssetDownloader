@@ -15,6 +15,7 @@
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -26,6 +27,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>preview</LangVersion>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -36,6 +38,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>preview</LangVersion>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Costura, Version=3.3.3.0, Culture=neutral, PublicKeyToken=9919ef960d84173d, processorArchitecture=MSIL">
@@ -90,7 +96,11 @@
     <Compile Include="Crypt\DecryptFiles.cs" />
     <Compile Include="Define.cs" />
     <Compile Include="Asset\JsonParse.cs" />
-    <Compile Include="Extensions\Default.cs" />
+    <Compile Include="Extensions\EventScore.cs" />
+    <Compile Include="Extensions\FormatScout.cs" />
+    <Compile Include="Extensions\GetDatas.cs" />
+    <Compile Include="Extensions\FirstSetup.cs" />
+    <Compile Include="Extensions\ReadEpisodes.cs" />
     <Compile Include="IGetUrl.cs" />
     <Compile Include="MainTest.cs">
       <SubType>Form</SubType>

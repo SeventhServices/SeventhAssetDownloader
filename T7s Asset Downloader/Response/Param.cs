@@ -17,23 +17,23 @@ namespace T7s_Sig_Counter
     public class MakeParams
     {
         private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-        public static List<Param> Params = new List<Param>();
+        public List<Param> Params = new List<Param>();
 
-        public static string GetUnixTime()
+        public string GetUnixTime()
         {
             TimeSpan ts = DateTime.UtcNow - UnixEpoch;
             return Convert.ToInt64(ts.TotalSeconds).ToString();
         }
 
-        public static string SortParam()
+        public string SortParam()
         {
             return string.Join("&", (from e in Params.OrderBy((Param e) => e.Key, StringComparer.Ordinal)
                                      select $"{e.Key}={e.Value}").ToArray());
         }
 
-        public static List<Param> AddCommonParams()
+        public void AddCommonParams()
         {
-            List<Param> Params = new List<Param>
+            List<Param> CommonParams = new List<Param>
             {
                 new Param
                 {
@@ -81,15 +81,9 @@ namespace T7s_Sig_Counter
                     Key = "jb",
                     Value = "0"
                 },
-                new Param
-                {
-                    Key = "pid",
-                    //Value = "791080"
-                    Value = SaveData.Decrypt(Define.encPid)
-                }
             };
 
-            return Params;
+            Params.AddRange(CommonParams);
         }
 
         public void AddParam(string key, string value)
@@ -101,26 +95,34 @@ namespace T7s_Sig_Counter
             });
         }
 
-        public void AddSignatureParam(string id , string apiName)
+        public void ClearParam()
         {
-            Params = AddCommonParams();
-            AddParam("userRev", Define.UserRev);
-            Params.Add(new Param
-            {
-                Key = "sig",
-                Value = GetSignature(id , apiName)
-            });
+            Params.Clear();
         }
 
-        public static string GetParam()
+        public void AddSignatureParam(string id , string apiName , bool isFirst = false)
+        {
+            AddParam("sig", GetSignature(id, apiName , isFirst));
+        }
+
+        public string GetParam()
         {
             return string.Join("&", (from e in Params select $"{e.Key}={e.Value}").ToArray());
         }
 
-        public string GetSignature ( string id , string apiName )
+        public string GetSignature ( string id , string apiName , bool isFirst = false )
         {
-            string uuid = SaveData.Decrypt(id);
-            string sigKey = "0249E2D0-739D-47E7-9TOK-YO7THSISTERS&" + uuid;
+            string sigKey;
+            if (isFirst)
+            {
+                sigKey = "0249E2D0-739D-47E7-9TOK-YO7THSISTERS";
+            }
+            else
+            {
+                var uuid = SaveData.Decrypt(id);
+                sigKey = "0249E2D0-739D-47E7-9TOK-YO7THSISTERS&" + uuid;
+            }
+
             string data = apiName + "?" + SortParam();
 
             return Signature.EscapeRfc3986(Signature.MakeSignature(sigKey,Uri.UnescapeDataString(data)));

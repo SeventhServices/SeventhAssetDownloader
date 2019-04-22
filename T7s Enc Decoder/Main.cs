@@ -43,6 +43,11 @@ namespace T7s_Enc_Decoder
 
             }
         }
+
+        private void Main_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 
 
