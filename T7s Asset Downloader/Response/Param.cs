@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web;
-using T7s_Asset_Downloader;
 
-namespace T7s_Sig_Counter
+namespace T7s_Asset_Downloader.Response
 {
     public class Param
     {
@@ -21,19 +17,19 @@ namespace T7s_Sig_Counter
 
         public string GetUnixTime()
         {
-            TimeSpan ts = DateTime.UtcNow - UnixEpoch;
+            var ts = DateTime.UtcNow - UnixEpoch;
             return Convert.ToInt64(ts.TotalSeconds).ToString();
         }
 
         public string SortParam()
         {
-            return string.Join("&", (from e in Params.OrderBy((Param e) => e.Key, StringComparer.Ordinal)
-                                     select $"{e.Key}={e.Value}").ToArray());
+            return string.Join("&", (from e in Params.OrderBy(e => e.Key, StringComparer.Ordinal)
+                select $"{e.Key}={e.Value}").ToArray());
         }
 
         public void AddCommonParams()
         {
-            List<Param> CommonParams = new List<Param>
+            var CommonParams = new List<Param>
             {
                 new Param
                 {
@@ -80,7 +76,7 @@ namespace T7s_Sig_Counter
                 {
                     Key = "jb",
                     Value = "0"
-                },
+                }
             };
 
             Params.AddRange(CommonParams);
@@ -100,9 +96,9 @@ namespace T7s_Sig_Counter
             Params.Clear();
         }
 
-        public void AddSignatureParam(string id , string apiName , bool isFirst = false)
+        public void AddSignatureParam(string id, string apiName, bool isFirst = false)
         {
-            AddParam("sig", GetSignature(id, apiName , isFirst));
+            AddParam("sig", GetSignature(id, apiName, isFirst));
         }
 
         public string GetParam()
@@ -110,7 +106,7 @@ namespace T7s_Sig_Counter
             return string.Join("&", (from e in Params select $"{e.Key}={e.Value}").ToArray());
         }
 
-        public string GetSignature ( string id , string apiName , bool isFirst = false )
+        public string GetSignature(string id, string apiName, bool isFirst = false)
         {
             string sigKey;
             if (isFirst)
@@ -123,11 +119,9 @@ namespace T7s_Sig_Counter
                 sigKey = "0249E2D0-739D-47E7-9TOK-YO7THSISTERS&" + uuid;
             }
 
-            string data = apiName + "?" + SortParam();
+            var data = apiName + "?" + SortParam();
 
-            return Signature.EscapeRfc3986(Signature.MakeSignature(sigKey,Uri.UnescapeDataString(data)));
+            return Signature.EscapeRfc3986(Signature.MakeSignature(sigKey, Uri.UnescapeDataString(data)));
         }
-
     }
-
 }

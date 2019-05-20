@@ -52,8 +52,8 @@
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.TextBox_CardTo = new System.Windows.Forms.TextBox();
+            this.TextBox_CardFrom = new System.Windows.Forms.TextBox();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
@@ -62,9 +62,9 @@
             this.button3 = new System.Windows.Forms.Button();
             this.button4 = new System.Windows.Forms.Button();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this.button5 = new System.Windows.Forms.Button();
-            this.textBox9 = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.textBox9 = new System.Windows.Forms.TextBox();
+            this.button5 = new System.Windows.Forms.Button();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -206,8 +206,8 @@
             this.groupBox3.Controls.Add(this.textBox4);
             this.groupBox3.Controls.Add(this.label4);
             this.groupBox3.Controls.Add(this.label5);
-            this.groupBox3.Controls.Add(this.textBox2);
-            this.groupBox3.Controls.Add(this.textBox1);
+            this.groupBox3.Controls.Add(this.TextBox_CardTo);
+            this.groupBox3.Controls.Add(this.TextBox_CardFrom);
             this.groupBox3.Controls.Add(this.button1);
             this.groupBox3.Controls.Add(this.button2);
             this.groupBox3.Controls.Add(this.label2);
@@ -315,19 +315,19 @@
             this.label5.TabIndex = 12;
             this.label5.Text = "=>";
             // 
-            // textBox2
+            // TextBox_CardTo
             // 
-            this.textBox2.Location = new System.Drawing.Point(238, 35);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(110, 27);
-            this.textBox2.TabIndex = 7;
+            this.TextBox_CardTo.Location = new System.Drawing.Point(238, 35);
+            this.TextBox_CardTo.Name = "TextBox_CardTo";
+            this.TextBox_CardTo.Size = new System.Drawing.Size(110, 27);
+            this.TextBox_CardTo.TabIndex = 7;
             // 
-            // textBox1
+            // TextBox_CardFrom
             // 
-            this.textBox1.Location = new System.Drawing.Point(89, 35);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(106, 27);
-            this.textBox1.TabIndex = 5;
+            this.TextBox_CardFrom.Location = new System.Drawing.Point(89, 35);
+            this.TextBox_CardFrom.Name = "TextBox_CardFrom";
+            this.TextBox_CardFrom.Size = new System.Drawing.Size(106, 27);
+            this.TextBox_CardFrom.TabIndex = 5;
             // 
             // button1
             // 
@@ -345,15 +345,15 @@
             // button2
             // 
             this.button2.BackColor = System.Drawing.SystemColors.Window;
-            this.button2.Enabled = false;
             this.button2.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button2.Location = new System.Drawing.Point(15, 240);
             this.button2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(158, 37);
             this.button2.TabIndex = 1;
-            this.button2.Text = "获取对应索引";
+            this.button2.Text = "下载对应卡面";
             this.button2.UseVisualStyleBackColor = false;
+            this.button2.Click += new System.EventHandler(this.Button2_Click);
             // 
             // label2
             // 
@@ -420,6 +420,22 @@
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "高级下载设置";
             // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(11, 35);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(99, 20);
+            this.label10.TabIndex = 7;
+            this.label10.Text = "下载线程数：";
+            // 
+            // textBox9
+            // 
+            this.textBox9.Location = new System.Drawing.Point(116, 32);
+            this.textBox9.Name = "textBox9";
+            this.textBox9.Size = new System.Drawing.Size(114, 27);
+            this.textBox9.TabIndex = 6;
+            // 
             // button5
             // 
             this.button5.BackColor = System.Drawing.SystemColors.Window;
@@ -431,22 +447,6 @@
             this.button5.TabIndex = 3;
             this.button5.Text = "设置";
             this.button5.UseVisualStyleBackColor = false;
-            // 
-            // textBox9
-            // 
-            this.textBox9.Location = new System.Drawing.Point(116, 32);
-            this.textBox9.Name = "textBox9";
-            this.textBox9.Size = new System.Drawing.Size(114, 27);
-            this.textBox9.TabIndex = 6;
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(11, 35);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(99, 20);
-            this.label10.TabIndex = 7;
-            this.label10.Text = "下载线程数：";
             // 
             // Advance
             // 
@@ -463,7 +463,6 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "Advance";
-            this.Text = "Advance";
             this.Load += new System.EventHandler(this.Advance_Load);
             this.groupBox2.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
@@ -490,8 +489,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox textBox_InputRev;
         private System.Windows.Forms.GroupBox groupBox3;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox TextBox_CardTo;
+        private System.Windows.Forms.TextBox TextBox_CardFrom;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label2;

@@ -209,7 +209,7 @@
             this.textBox_SeachFiles.Name = "textBox_SeachFiles";
             this.textBox_SeachFiles.Size = new System.Drawing.Size(263, 27);
             this.textBox_SeachFiles.TabIndex = 11;
-            this.textBox_SeachFiles.TextChanged += new System.EventHandler(this.TextBox_SeachFiles_TextChanged);
+            this.textBox_SeachFiles.TextChanged += new System.EventHandler(this.TextBox_SearchFiles_TextChanged);
             // 
             // groupBox4
             // 
@@ -286,7 +286,6 @@
             // button_ShowAdvance
             // 
             this.button_ShowAdvance.BackColor = System.Drawing.SystemColors.Window;
-            this.button_ShowAdvance.Enabled = false;
             this.button_ShowAdvance.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button_ShowAdvance.Location = new System.Drawing.Point(792, 9);
             this.button_ShowAdvance.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);

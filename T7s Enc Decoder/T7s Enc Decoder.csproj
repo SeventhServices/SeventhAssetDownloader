@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Crypt.cs" />
+    <Compile Include="Crypt_Old.cs" />
     <Compile Include="DecryptFiles.cs" />
     <Compile Include="Define.cs" />
     <Compile Include="Main.cs">

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using T7s_Enc_Decoder;
+﻿using System.Linq;
+using T7s_Asset_Downloader.Crypt;
+using T7s_Asset_Downloader.Response;
 
 namespace T7s_Asset_Downloader.Extensions
 {
-
     internal interface IGetUrl
     {
         string Donin { get; }
@@ -22,76 +18,85 @@ namespace T7s_Asset_Downloader.Extensions
 
         void SaveFile(int id, string savePath);
     }
-    class Datas : IGetUrl
+
+    internal class Datas : IGetUrl
     {
         public string Donin => "https://d2kvktrbzlzxwg.cloudfront.net/";
 
         public string GetUrl(string fileName)
         {
-            string UrlPath = Define.JsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
+            var UrlPath = Define.JsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
             return Define.DownloadPath + UrlPath;
         }
     }
 
-    class GetCard : IGetData
+    internal class GetCard : IGetData
     {
         private readonly MakeRequest _makeRequest;
-        public GetCard( MakeRequest makeRequest)
+
+        public GetCard(MakeRequest makeRequest)
         {
             _makeRequest = makeRequest;
             _makeRequest._ini_GetClient();
         }
+
         public string Donin => "https://api.t7s.jp/resource/images/card/l/";
+
         public string GetUrl(int id)
         {
-            return Donin + "card_l_" + id.ToString("D5") + ".jpg.enc";
+            return Donin + GetFileNme(id);
         }
 
         public string GetFileNme(int id)
         {
-            return "card_m_" + id.ToString("D5") + ".jpg.enc";
-        }
-
-        public async void SaveFileAndDecrypt(int id, string savePath)
-        {
-            await _makeRequest.MakeSingleGetRequest(GetUrl(id),savePath,GetFileNme(id));
-            DecryptFiles.DecryptFile(savePath + GetFileNme(id), EncVersion.Ver1);
+            return Crypt.Crypt.ConvertFileName("card_l_" + id.ToString("D5") + ".jpg.enc", EncVersion.Ver1,
+                EncVersion.Ver2);
         }
 
         public async void SaveFile(int id, string savePath)
         {
             await _makeRequest.MakeSingleGetRequest(GetUrl(id), savePath, GetFileNme(id));
         }
+
+        public async void SaveFileAndDecrypt(int id, string savePath)
+        {
+            if (await _makeRequest.MakeSingleGetRequest(GetUrl(id), savePath, GetFileNme(id)) != null)
+                DecryptFiles.DecryptFile(savePath + GetFileNme(id), Crypt.EncVersion.Ver2);
+        }
     }
 
-    class GetMiddleCard : IGetData
+    internal class GetMiddleCard : IGetData
     {
         private readonly MakeRequest _makeRequest;
+
         public GetMiddleCard(MakeRequest makeRequest)
         {
             _makeRequest = makeRequest;
             _makeRequest._ini_GetClient();
         }
-        public string Donin => "https://api.t7s.jp/resource/images/card/l/";
+
+        public string Donin => "https://d2kvktrbzlzxwg.cloudfront.net/revision/";
+        
         public string GetUrl(int id)
         {
-            return Donin + Define.DownloadPath + "card_l_" + id.ToString("D5") + ".jpg.enc";
+            return Donin + Define.DownloadPath + GetFileNme(id);
         }
 
         public string GetFileNme(int id)
         {
-            return "card_m_" + id.ToString("D5") + ".jpg.enc";
+            return Crypt.Crypt.ConvertFileName("card_m_" + id.ToString("D5") + ".jpg.enc", EncVersion.Ver1,
+                EncVersion.Ver2);
+        }
+
+        public async void SaveFile(int id, string savePath)
+        {
+            if (await _makeRequest.MakeSingleGetRequest(GetUrl(id), savePath, GetFileNme(id)) != null)
+                DecryptFiles.DecryptFile(savePath + GetFileNme(id), Crypt.EncVersion.Ver2);
         }
 
         public async void SaveFileAndDecrypt(int id, string savePath)
         {
             await _makeRequest.MakeSingleGetRequest(GetUrl(id), savePath, GetFileNme(id));
-        }
-
-        public async void SaveFile(int id, string savePath)
-        {
-            await _makeRequest.MakeSingleGetRequest(GetUrl(id), savePath, GetFileNme(id));
-            DecryptFiles.DecryptFile(savePath + GetFileNme(id), EncVersion.Ver1);
         }
     }
 }

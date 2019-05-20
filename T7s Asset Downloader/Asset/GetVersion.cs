@@ -1,36 +1,25 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 using HtmlAgilityPack;
-using Newtonsoft.Json.Linq;
 
 namespace T7s_Asset_Downloader.Asset
 {
     internal static class GetVersion
     {
-        public class GameVersion
-        {
-            public string Version { get; set; }
-            public string VersionCode { get; set; }
-            public string DownloadPath { get; set; }
-        };
-
         private const string Url = "http://1app.pw/app/history/8";
 
-        private static string SelectHtmlToString(string selectString ,string param = " ", bool attributes = false)
+        private static string SelectHtmlToString(string selectString, string param = " ", bool attributes = false)
         {
             var web = new HtmlWeb();
             var htmlDoc = web.Load(Url);
             var NewVersionDivSelectString = "//body/div[2]/div[last()]/div[1]";
 
             if (attributes)
-            {
                 return htmlDoc.DocumentNode.SelectSingleNode(
                     NewVersionDivSelectString +
                     selectString).Attributes[param].Value;
-            }
 
-            return  htmlDoc.DocumentNode.SelectSingleNode(
+            return htmlDoc.DocumentNode.SelectSingleNode(
                     NewVersionDivSelectString +
                     selectString).InnerText
                 .Replace("\t", "")
@@ -38,7 +27,6 @@ namespace T7s_Asset_Downloader.Asset
                 .Replace("\r", "")
                 .Replace("\n", "")
                 .Replace(param, "");
-
         }
 
         public static GameVersion GetNewVersion()
@@ -60,7 +48,11 @@ namespace T7s_Asset_Downloader.Asset
             }
         }
 
-
-
+        public class GameVersion
+        {
+            public string Version { get; set; }
+            public string VersionCode { get; set; }
+            public string DownloadPath { get; set; }
+        }
     }
 }

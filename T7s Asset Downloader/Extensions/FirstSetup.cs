@@ -1,49 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using T7s_Enc_Decoder;
-using T7s_Sig_Counter;
+using T7s_Asset_Downloader.Response;
 
 namespace T7s_Asset_Downloader.Extensions
 {
-    class FirstSetup
+    internal class FirstSetup
     {
+        private static readonly MakeRequest MakeRequest = new MakeRequest();
+        public readonly GetCard GetCard = new GetCard(MakeRequest);
         private JObject _resultJsonObject;
-
-        public class Card
-        {
-            public int Id;
-
-        }
-        public class Gacha
-        {
-            public List<Card> CardList { get; set; }
-        }
-
-        public class Account
-        {
-            public string pid { get; set; }
-            public string uuid { get; set; }
-            public string Id { get; set; }
-            public string encPid { get; set; }
-            public string eud { get; set; }
-            public string ivs { get; set; }
-            public string tpid { get; set; }
-            public List<Gacha> Gachas { get; set; }
-            public List<Card> userCardList { get; set; }
-        }
 
         public List<Account> Accounts = new List<Account>();
 
         public List<Card> UserCardList = new List<Card>();
-        private static readonly MakeRequest MakeRequest = new MakeRequest();
-        public readonly GetCard GetCard = new GetCard(MakeRequest);
 
         public string DecryptUUID(string encUUID, string iv)
         {
@@ -59,6 +33,7 @@ namespace T7s_Asset_Downloader.Extensions
                     _resultJsonObject = await JToken.ReadFromAsync(reader) as JObject;
                 }
             }
+
             return 0;
         }
 
@@ -77,19 +52,18 @@ namespace T7s_Asset_Downloader.Extensions
                 Id = SaveData.Encrypt(uuid),
                 eud = eud,
                 ivs = ivs,
-                tpid = tpid,
+                tpid = tpid
             };
             return account;
         }
 
-        public string ParseGachaMain( int index)
+        public string ParseGachaMain(int index)
         {
             var gachaList = _resultJsonObject["gachaMain"]["gachaList"] as JArray;
             if (gachaList == null) return "0";
             var gachaDetails = gachaList[index]["gachaDetails"];
             var gachaId = gachaDetails[0]["gachaId"].ToString();
             return gachaId;
-
         }
 
         public Gacha ParseGachaResult()
@@ -102,47 +76,35 @@ namespace T7s_Asset_Downloader.Extensions
                 CardList = new List<Card>()
             };
             foreach (var card in getCardList)
-            {
-                Gacha.CardList.Add(new Card()
+                Gacha.CardList.Add(new Card
                 {
                     Id = (int) card["cardId"]
                 });
-            }
 
             return Gacha;
         }
 
-        private void SetUserCardList( Account account)
+        private void SetUserCardList(Account account)
         {
             var gachaResult = _resultJsonObject["gachaResult"];
             var userCardList = gachaResult["userCardList"] as JArray;
 
             account.userCardList = new List<Card>();
             foreach (var card in userCardList)
-            {
-                account.userCardList.Add(new Card()
+                account.userCardList.Add(new Card
                     {
                         Id = (int) card["cardId"]
                     }
                 );
-            }
-
         }
 
-        private Task DownloadGachaCard( Gacha gacha , string savePath )
+        private Task DownloadGachaCard(Gacha gacha, string savePath)
         {
             return new Task(() =>
             {
-                foreach (var card in gacha.CardList)
-                {
-                    GetCard.SaveFileAndDecrypt(card.Id,savePath);
-                }
+                foreach (var card in gacha.CardList) GetCard.SaveFileAndDecrypt(card.Id, savePath);
             });
-
-
-
         }
-
 
 
         public async void StartFirstSetup()
@@ -153,14 +115,13 @@ namespace T7s_Asset_Downloader.Extensions
             {
                 do
                 {
-
                     Define.Rev = "0";
                     var apiName = Define.GetApiName(Define.APINAME_TYPE.first);
                     var makeParams = new MakeParams();
                     makeParams.AddCommonParams();
                     makeParams.AddSignatureParam("", apiName, true);
                     await MakeRequest.MakeNaturalPostRequest(apiName, makeParams.GetParam());
-                    await ParseResultJsonAsync(Define.GetTempPath());
+                    await ParseResultJsonAsync(Define.GetExtensionsTempPath());
 
                     var account = ParseAccount();
 
@@ -208,7 +169,7 @@ namespace T7s_Asset_Downloader.Extensions
                     makeParams.AddParam("pid", account.pid);
                     makeParams.AddSignatureParam(account.Id, apiName);
                     await MakeRequest.MakeNaturalPostRequest(apiName, makeParams.GetParam());
-                    await ParseResultJsonAsync(Define.GetTempPath());
+                    await ParseResultJsonAsync(Define.GetExtensionsTempPath());
 
                     apiName = Define.GetApiName(Define.APINAME_TYPE.gacha_result);
                     makeParams.ClearParam();
@@ -222,9 +183,9 @@ namespace T7s_Asset_Downloader.Extensions
                     makeParams.AddParam("pid", account.pid);
                     makeParams.AddSignatureParam(account.Id, apiName);
                     await MakeRequest.MakeNaturalPostRequest(apiName, makeParams.GetParam());
-                    await ParseResultJsonAsync(Define.GetTempPath());
+                    await ParseResultJsonAsync(Define.GetExtensionsTempPath());
 
-                    account.Gachas = new List<Gacha> { ParseGachaResult() };
+                    account.Gachas = new List<Gacha> {ParseGachaResult()};
 
                     DownloadGachaCard(account.Gachas[0], $@"{Define.GetExtensionsSavePath()}{account.pid}\").Start();
 
@@ -259,11 +220,14 @@ namespace T7s_Asset_Downloader.Extensions
                     makeParams.AddParam("pid", account.pid);
                     makeParams.AddSignatureParam(account.Id, apiName);
                     await MakeRequest.MakeNaturalPostRequest(apiName, makeParams.GetParam());
-                    await ParseResultJsonAsync(Define.GetTempPath());
+                    await ParseResultJsonAsync(Define.GetExtensionsTempPath());
+
+                    var gachaId1 = ParseGachaMain(2);
+                    var gachaId2 = ParseGachaMain(3);
 
                     apiName = Define.GetApiName(Define.APINAME_TYPE.gacha_result);
                     makeParams.ClearParam();
-                    makeParams.AddParam("gachaId", ParseGachaMain(3));
+                    makeParams.AddParam("gachaId",gachaId1 );
                     makeParams.AddParam("continueNum", "1");
                     makeParams.AddParam("paymentType", "1");
                     makeParams.AddParam("sellRarity", "0");
@@ -273,9 +237,26 @@ namespace T7s_Asset_Downloader.Extensions
                     makeParams.AddParam("pid", account.pid);
                     makeParams.AddSignatureParam(account.Id, apiName);
                     await MakeRequest.MakeNaturalPostRequest(apiName, makeParams.GetParam());
-                    await ParseResultJsonAsync(Define.GetTempPath());
+                    await ParseResultJsonAsync(Define.GetExtensionsTempPath());
 
                     account.Gachas.Add(ParseGachaResult());
+
+                    apiName = Define.GetApiName(Define.APINAME_TYPE.gacha_result);
+                    makeParams.ClearParam();
+                    makeParams.AddParam("gachaId", gachaId2);
+                    makeParams.AddParam("continueNum", "1");
+                    makeParams.AddParam("paymentType", "1");
+                    makeParams.AddParam("sellRarity", "0");
+                    makeParams.AddParam("removeTarget", "0");
+                    makeParams.AddParam("eventType", "0");
+                    makeParams.AddCommonParams();
+                    makeParams.AddParam("pid", account.pid);
+                    makeParams.AddSignatureParam(account.Id, apiName);
+                    await MakeRequest.MakeNaturalPostRequest(apiName, makeParams.GetParam());
+                    await ParseResultJsonAsync(Define.GetExtensionsTempPath());
+
+                    account.Gachas.Add(ParseGachaResult());
+
                     SetUserCardList(account);
 
                     DownloadGachaCard(account.Gachas[1], Define.GetExtensionsSavePath() + account.pid + @"\").Start();
@@ -298,10 +279,27 @@ namespace T7s_Asset_Downloader.Extensions
             }
         }
 
+        public class Card
+        {
+            public int Id;
+        }
 
+        public class Gacha
+        {
+            public List<Card> CardList { get; set; }
+        }
 
-
-
-
+        public class Account
+        {
+            public string pid { get; set; }
+            public string uuid { get; set; }
+            public string Id { get; set; }
+            public string encPid { get; set; }
+            public string eud { get; set; }
+            public string ivs { get; set; }
+            public string tpid { get; set; }
+            public List<Gacha> Gachas { get; set; }
+            public List<Card> userCardList { get; set; }
+        }
     }
 }

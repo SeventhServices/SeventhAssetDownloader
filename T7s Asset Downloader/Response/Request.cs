@@ -1,26 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using System.Threading.Tasks;
+using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.IO;
-using T7s_Enc_Decoder;
-using T7s_Sig_Counter;
-using System.Net.Http.Headers;
 using System.Net.Http.Handlers;
-using System.Threading;
-using Newtonsoft.Json.Serialization;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
-namespace T7s_Asset_Downloader
+namespace T7s_Asset_Downloader.Response
 {
     internal class MakeRequest
     {
         #region Http
+
         private static HttpClient _getClient;
         private static HttpClient _singleGetClient;
+
         private static HttpClient _postClient;
         //private static ManualResetEvent ManualResetEvent = new ManualResetEvent(true);
 
@@ -40,15 +36,16 @@ namespace T7s_Asset_Downloader
                     RequestUri = new Uri(Define.BaseUrl + Define.GetApiName(Define.APINAME_TYPE.inspection))
                 });
             });
-
         }
+
         public void _ini_GetClient()
         {
             _singleGetClient = new HttpClient();
         }
+
         public void _ini_PostClient()
         {
-            _postClient = new HttpClient()
+            _postClient = new HttpClient
             {
                 BaseAddress = new Uri(Define.BaseUrl),
                 Timeout = new TimeSpan(0, 10, 0)
@@ -56,17 +53,16 @@ namespace T7s_Asset_Downloader
 
             _postClient.DefaultRequestHeaders.Add("Expect", "100-continue");
             _postClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
-            _postClient.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
+            _postClient.DefaultRequestHeaders.Add("UserAgent",
+                "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
             _postClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
             _postClient.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
             _postClient.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
         }
+
         public async Task<string> MakeSingleGetRequest(string getUrl, string savePath, string fileName)
         {
-            if (!Directory.Exists(savePath))
-            {
-                Directory.CreateDirectory(savePath);
-            }
+            if (!Directory.Exists(savePath)) Directory.CreateDirectory(savePath);
 
             try
             {
@@ -85,17 +81,15 @@ namespace T7s_Asset_Downloader
                 else
                 {
                     response.EnsureSuccessStatusCode();
-                    MessageBox.Show("文件不存在");
                 }
 
                 return fileName;
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Console.WriteLine($@"ERROR:{fileName}");
                 throw;
             }
-
         }
 
 
@@ -129,7 +123,6 @@ namespace T7s_Asset_Downloader
                 Console.WriteLine(e);
                 throw;
             }
-
         }
 
         public async Task<int> MakeUpdatePostRequest(string id, string apiName)
@@ -165,6 +158,7 @@ namespace T7s_Asset_Downloader
 
                     return 0;
                 }
+
                 response.EnsureSuccessStatusCode();
                 return 1;
             }
@@ -173,7 +167,6 @@ namespace T7s_Asset_Downloader
                 MessageBox.Show(e.Message);
                 throw;
             }
-
         }
 
         public async Task<string> MakePostRequest(string id, string apiName, bool update = false)
@@ -223,7 +216,8 @@ namespace T7s_Asset_Downloader
                 throw;
             }
         }
-        public async Task<int> MakeNaturalPostRequest(string apiname, string param )
+
+        public async Task<int> MakeNaturalPostRequest(string apiname, string param)
         {
             try
             {
@@ -263,9 +257,12 @@ namespace T7s_Asset_Downloader
                 throw;
             }
         }
-        public async Task<string> MakePostRequest(string id, string apiName, ProgressMessageHandler progressMessageHandler, bool save = false)
+
+        public async Task<string> MakePostRequest(string id, string apiName,
+            ProgressMessageHandler progressMessageHandler, bool save = false)
         {
-            return await Task.Run(async () => {
+            return await Task.Run(async () =>
+            {
                 var makeParams = new MakeParams();
                 makeParams.AddSignatureParam(id, apiName);
                 HttpContent httpContent = new StringContent(makeParams.GetParam());
@@ -281,7 +278,8 @@ namespace T7s_Asset_Downloader
                 {
                     client.DefaultRequestHeaders.Add("Expect", "100-continue");
                     client.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
-                    client.DefaultRequestHeaders.Add("UserAgent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
+                    client.DefaultRequestHeaders.Add("UserAgent",
+                        "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
                     client.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
                     client.DefaultRequestHeaders.Add("Connection", "Keep-Alive");
                     client.DefaultRequestHeaders.Add("Accept-Encoding", "gzip");
@@ -293,16 +291,14 @@ namespace T7s_Asset_Downloader
                     return await httpResponse.Content.ReadAsStringAsync();
                 }
             });
-
         }
-
-
 
         #endregion
 
         #region RawHttp
+
         /// <summary>
-        /// 生成GET请求
+        ///     生成GET请求
         /// </summary>
         /// <param name="getUrl">GET地址</param>
         /// <returns></returns>
@@ -310,17 +306,17 @@ namespace T7s_Asset_Downloader
         {
             await Task.Run(async () =>
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(getUrl);
+                var request = (HttpWebRequest) WebRequest.Create(getUrl);
                 request.Method = "GET";
                 request.ContentType = "application/json";
-                HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+                var response = (HttpWebResponse) request.GetResponse();
                 //在这里对接收到的页面内容进行处理
-                Stream responseStream = response.GetResponseStream();
+                var responseStream = response.GetResponseStream();
 
-                byte[] FileBytes = new byte[Convert.ToInt32(response.ContentLength)];
-                int Size = await responseStream.ReadAsync(FileBytes, 0, FileBytes.Length);
-                int NowSize = Size;
-                using (FileStream fileStream = new FileStream(savePath, FileMode.Create))
+                var FileBytes = new byte[Convert.ToInt32(response.ContentLength)];
+                var Size = await responseStream.ReadAsync(FileBytes, 0, FileBytes.Length);
+                var NowSize = Size;
+                using (var fileStream = new FileStream(savePath, FileMode.Create))
                 {
                     while (Size > 0)
                     {
@@ -328,13 +324,14 @@ namespace T7s_Asset_Downloader
                         Size = await responseStream.ReadAsync(FileBytes, 0, FileBytes.Length);
                         NowSize = NowSize + Size;
                     }
+
                     fileStream.Close();
                 }
             });
-
         }
+
         /// <summary>
-        /// 生成Post请求
+        ///     生成Post请求
         /// </summary>
         /// <param name="postUrl">POST地址</param>
         /// <param name="id">用户的id</param>
@@ -342,10 +339,10 @@ namespace T7s_Asset_Downloader
         /// <returns></returns>
         public async Task<string> RawMakePostRequest(string postUrl, string id, string apiName, bool save = false)
         {
-            MakeParams makeParams = new MakeParams();
+            var makeParams = new MakeParams();
             makeParams.AddSignatureParam(id, apiName);
-            byte[] PrarmsBytes = Encoding.UTF8.GetBytes(makeParams.GetParam());
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(new Uri(postUrl));
+            var PrarmsBytes = Encoding.UTF8.GetBytes(makeParams.GetParam());
+            var request = (HttpWebRequest) WebRequest.Create(new Uri(postUrl));
             request.Method = "POST";
 
             request.ContentType = "application/x-www-form-urlencoded";
@@ -364,38 +361,33 @@ namespace T7s_Asset_Downloader
             //    System.Windows.Forms.MessageBox.Show("网络异常，请重试！", "错误", System.Windows.Forms.MessageBoxButtons.RetryCancel); 
             //}
 
-            using (Stream requestStream = request.GetRequestStream())
+            using (var requestStream = request.GetRequestStream())
             {
                 requestStream.Write(PrarmsBytes, 0, PrarmsBytes.Length);
             }
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+
+            using (var response = (HttpWebResponse) request.GetResponse())
             {
-                using (StreamReader streamReader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                using (var streamReader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
                 {
-                    string JsonString = await streamReader.ReadToEndAsync();
+                    var JsonString = await streamReader.ReadToEndAsync();
                     if (save)
                     {
                         if (!Directory.Exists(Define.LocalPath + @"\Asset\Result"))
-                        {
                             Directory.CreateDirectory(Define.LocalPath + @"\Asset\Result");
-                        }
-                        using (StreamWriter streamWriter = new StreamWriter(Define.LocalPath + @"\Asset\Result\" + "Result.json"))
+                        using (var streamWriter =
+                            new StreamWriter(Define.LocalPath + @"\Asset\Result\" + "Result.json"))
                         {
                             await streamWriter.WriteAsync(JsonString);
                             streamWriter.Close();
                         }
                     }
+
                     return JsonString;
                 }
             }
         }
 
-
         #endregion
-
     }
-
-   
-
 }
-

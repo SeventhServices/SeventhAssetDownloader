@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace T7s_Enc_Decoder.Properties {
+namespace T7sAsset.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

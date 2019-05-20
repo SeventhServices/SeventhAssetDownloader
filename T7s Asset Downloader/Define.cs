@@ -1,19 +1,49 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using T7s_Asset_Downloader.Asset;
-using UnityEngine.SocialPlatforms;
 
 namespace T7s_Asset_Downloader
 {
     public static class Define
     {
-        public static JsonParse JsonParse = new JsonParse();
+        /// <summary>
+        ///     定义apiName
+        /// </summary>
+        public enum APINAME_TYPE
+        {
+            /// <summary>
+            ///     Login
+            /// </summary>
+            login,
 
-        public static string LocalPath { get; set; }
-        public static string ApkDownloadPath { get; set; }
+            /// <summary>
+            ///     setup/resource/result
+            /// </summary>
+            result,
+
+            /// <summary>
+            ///     setup/resource/result
+            /// </summary>
+            inspection,
+            first,
+            comp,
+            gacha_main,
+            gacha_result,
+            tutorial_chara,
+            tutorial_name,
+            tutorial_type,
+            tutorial_end,
+            tutorial_questionnaire,
+            tutorial_beginner,
+
+            event_ranking_user,
+
+            episode_main,
+            scenario_result
+        }
+
+        public static JsonParse JsonParse = new JsonParse();
 
         public static string BaseUrl = "https://api.t7s.jp/";
         public static string Domin = "https://d2kvktrbzlzxwg.cloudfront.net/";
@@ -37,6 +67,9 @@ namespace T7s_Asset_Downloader
         public static int DownloadTaskSleep = 300;
         public static bool IsGetNewComplete;
 
+        public static string LocalPath { get; set; }
+        public static string ApkDownloadPath { get; set; }
+
         public static Task SetNewVersion()
         {
             return new Task(() =>
@@ -50,16 +83,15 @@ namespace T7s_Asset_Downloader
         }
 
 
-
         public static void _ini_Coning()
         {
             DownloadPath = JsonParse.DownloadConfings.Select(p => p.DownloadPath).ToArray().Last();
             Rev = NowRev = JsonParse.DownloadConfings.Select(p => p.Revision).ToArray().Last();
         }
 
-        public static string GetUrl ( string fileName )
+        public static string GetUrl(string fileName)
         {
-            string urlPath = JsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
+            var urlPath = JsonParse.FileUrls.Where(p => p.Name == fileName).Select(p => p.Url).ToArray()[0];
             return DownloadPath + urlPath;
         }
 
@@ -92,6 +124,7 @@ namespace T7s_Asset_Downloader
         {
             return LocalPath + @"\Asset\Index\Temp\Index.json";
         }
+
         public static string GetUpdatePath()
         {
             return LocalPath + @"\Asset\Index\Temp\Update.json";
@@ -112,7 +145,7 @@ namespace T7s_Asset_Downloader
             return LocalPath + @"\Asset\Index\Temp\Confing.json";
         }
 
-        public static string GetFileDownloadUrl( string fileName )
+        public static string GetFileDownloadUrl(string fileName)
         {
             return JsonParse.DownloadConfings.Select(p => p.DownloadPath).ToString();
         }
@@ -128,11 +161,11 @@ namespace T7s_Asset_Downloader
         }
 
         /// <summary>
-        /// (临时)获取API完整名
+        ///     (临时)获取API完整名
         /// </summary>
         /// <param name="apiName">API类型</param>
         /// <returns></returns>
-        public static string GetApiName (APINAME_TYPE apiName)
+        public static string GetApiName(APINAME_TYPE apiName)
         {
             switch (apiName)
             {
@@ -175,92 +208,63 @@ namespace T7s_Asset_Downloader
                     return "inspection";
             }
         }
-
-        /// <summary>
-        /// 定义apiName
-        /// </summary>
-        public enum APINAME_TYPE
-        {
-            /// <summary>
-            /// Login
-            /// </summary>
-            login,
-            /// <summary>
-            /// setup/resource/result
-            /// </summary>
-            result,
-            /// <summary>
-            /// setup/resource/result
-            /// </summary>
-            inspection,
-            first,
-            comp,
-            gacha_main,
-            gacha_result,
-            tutorial_chara,
-            tutorial_name,
-            tutorial_type,
-            tutorial_end,
-            tutorial_questionnaire,
-            tutorial_beginner,
-
-            event_ranking_user,
-
-            episode_main,
-            scenario_result
-        }
     }
 
     /// <summary>
-    /// 配置自动解密
+    ///     配置自动解密
     /// </summary>
     public enum AUTO_DECRYPT
     {
         /// <summary>
-        /// Auto
+        ///     Auto
         /// </summary>
         Auto,
+
         /// <summary>
-        /// None
+        ///     None
         /// </summary>
         None
     }
 
     /// <summary>
-    /// 当前程序状态
+    ///     当前程序状态
     /// </summary>
     public enum NOW_STAUTUS
     {
         /// <summary>
-        /// Normal
+        ///     Normal
         /// </summary>
         Normal,
+
         /// <summary>
-        /// First Open
+        ///     First Open
         /// </summary>
         First,
+
         /// <summary>
-        /// None Index.json
+        ///     None Index.json
         /// </summary>
         NoneIndex,
+
         /// <summary>
-        /// None Coning.json
+        ///     None Coning.json
         /// </summary>
         NoneConing
     }
 
     /// <summary>
-    /// 下载模式
+    ///     下载模式
     /// </summary>
     public enum DOWNLOAD_TYPE
     {
         /// <summary>
-        /// All Files
+        ///     All Files
         /// </summary>
         AllFiles,
+
         /// <summary>
-        /// Selet Files
+        ///     Selet Files
         /// </summary>
-        SeletFiles,
+        SeletFiles
     }
 }
