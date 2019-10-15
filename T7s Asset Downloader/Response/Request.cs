@@ -52,7 +52,7 @@ namespace T7s_Asset_Downloader.Response
             };
 
             _postClient.DefaultRequestHeaders.Add("Expect", "100-continue");
-            _postClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.2.6f1");
+            _postClient.DefaultRequestHeaders.Add("X-Unity-Version", "2018.3.12f1");
             _postClient.DefaultRequestHeaders.Add("UserAgent",
                 "Dalvik/2.1.0 (Linux; U; Android 5.1.1; xiaomi 8 Build/LMY49I)");
             _postClient.DefaultRequestHeaders.Add("Host", "api.t7s.jp");
@@ -87,7 +87,7 @@ namespace T7s_Asset_Downloader.Response
             }
             catch (Exception e)
             {
-                Console.WriteLine($@"ERROR:{fileName}");
+                Console.WriteLine($@"ERROR:{fileName} : {e.Message}");
                 throw;
             }
         }
@@ -130,6 +130,7 @@ namespace T7s_Asset_Downloader.Response
             try
             {
                 var Params = new MakeParams();
+                Params.AddParam("downloadType","0");
                 Params.AddParam("userRev", Define.UserRev);
                 Params.AddCommonParams();
                 Params.AddParam("pid", SaveData.Decrypt(Define.encPid));
@@ -139,13 +140,10 @@ namespace T7s_Asset_Downloader.Response
                     Headers =
                     {
                         ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded")
-                        {
-                            CharSet = "utf-8"
-                        }
                     }
                 };
 
-                var response = await _postClient.PostAsync(Define.GetApiName(Define.APINAME_TYPE.result)
+                var response = await _postClient.PostAsync(apiName
                     , httpContent);
                 if (response.IsSuccessStatusCode)
                 {

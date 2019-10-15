@@ -48,10 +48,11 @@ namespace T7s_Asset_Downloader
         public static string BaseUrl = "https://api.t7s.jp/";
         public static string Domin = "https://d2kvktrbzlzxwg.cloudfront.net/";
         public static string Id = "353b3932613b34642c346230672e36366165293e3a31312c3a64356060363030613f3764";
+        //public static string encPid = "323a31363b33";
         public static string encPid = "36323335313138";
-        public static string Ver = "6.2.2";
+        public static string Ver = "6.7.0";
         public static string Rev = "310";
-        public static string Blt = "139";
+        public static string Blt = "157";
         public static string UserRev = "297";
         
 

@@ -74,7 +74,7 @@ namespace T7s_Enc_Decoder
             byte[] FileBytes;
             using (FileStream fileStream = File.OpenWrite(Save.GetSavePath(FilePath) ))
             {
-                FileBytes = Crypt.Encrypt<byte[]>(System.IO.File.ReadAllBytes(FilePath),true,EncVersion.Ver2);
+                FileBytes = Crypt.Encrypt<byte[]>(System.IO.File.ReadAllBytes(FilePath),true,true);
                 fileStream.Write(FileBytes, 0, FileBytes.Length);
                 fileStream.Close();
             }

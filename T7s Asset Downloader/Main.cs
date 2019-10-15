@@ -96,8 +96,10 @@ namespace T7s_Asset_Downloader
 
         private async void TestNew()
         {
-            SetNoticesText(">> ... 正在查询游戏最新版本信息", downloadNotice);
-            await _setNewVersion;
+            try
+            {
+                SetNoticesText(">> ... 正在查询游戏最新版本信息", downloadNotice);
+                            await _setNewVersion;
 
             _request._ini_PostClient();
             if (Define.NOW_STAUTUS == NOW_STAUTUS.First)
@@ -156,6 +158,13 @@ namespace T7s_Asset_Downloader
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($@"请检测网络 ： {e.Message}");
+            }
+            
+
         }
 
 

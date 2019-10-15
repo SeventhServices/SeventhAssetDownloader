@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using HtmlAgilityPack;
+using HtmlDocument = HtmlAgilityPack.HtmlDocument;
 
 namespace T7s_Asset_Downloader.Asset
 {
@@ -8,18 +9,18 @@ namespace T7s_Asset_Downloader.Asset
     {
         private const string Url = "http://1app.pw/app/history/8";
 
+        private static HtmlDocument _htmlDocument;
         private static string SelectHtmlToString(string selectString, string param = " ", bool attributes = false)
         {
-            var web = new HtmlWeb();
-            var htmlDoc = web.Load(Url);
+
             var NewVersionDivSelectString = "//body/div[2]/div[last()]/div[1]";
 
             if (attributes)
-                return htmlDoc.DocumentNode.SelectSingleNode(
+                return _htmlDocument.DocumentNode.SelectSingleNode(
                     NewVersionDivSelectString +
                     selectString).Attributes[param].Value;
 
-            return htmlDoc.DocumentNode.SelectSingleNode(
+            return _htmlDocument.DocumentNode.SelectSingleNode(
                     NewVersionDivSelectString +
                     selectString).InnerText
                 .Replace("\t", "")
@@ -33,6 +34,8 @@ namespace T7s_Asset_Downloader.Asset
         {
             try
             {
+                var web = new HtmlWeb();
+                _htmlDocument = web.Load(Url);
                 var tempVersion = SelectHtmlToString("/div[1]/div[1]/a/span");
                 return new GameVersion
                 {
@@ -43,8 +46,12 @@ namespace T7s_Asset_Downloader.Asset
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message);
-                throw;
+                MessageBox.Show($@"检测游戏版本失败! : {e.Message}");
+                return new GameVersion
+                {
+                    Version = Define.Ver,
+                    VersionCode = Define.Blt,
+                };
             }
         }
 

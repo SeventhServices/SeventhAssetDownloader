@@ -65,11 +65,15 @@
             this.label10 = new System.Windows.Forms.Label();
             this.textBox9 = new System.Windows.Forms.TextBox();
             this.button5 = new System.Windows.Forms.Button();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.Button_FormatScout = new System.Windows.Forms.Button();
+            this.CheckBox_IsLink = new System.Windows.Forms.CheckBox();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
+            this.groupBox6.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox2
@@ -448,12 +452,47 @@
             this.button5.Text = "设置";
             this.button5.UseVisualStyleBackColor = false;
             // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.CheckBox_IsLink);
+            this.groupBox6.Controls.Add(this.Button_FormatScout);
+            this.groupBox6.Location = new System.Drawing.Point(12, 401);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(783, 82);
+            this.groupBox6.TabIndex = 10;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "扩展工具";
+            // 
+            // Button_FormatScout
+            // 
+            this.Button_FormatScout.BackColor = System.Drawing.SystemColors.Window;
+            this.Button_FormatScout.Font = new System.Drawing.Font("微软雅黑", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.Button_FormatScout.Location = new System.Drawing.Point(14, 27);
+            this.Button_FormatScout.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.Button_FormatScout.Name = "Button_FormatScout";
+            this.Button_FormatScout.Size = new System.Drawing.Size(159, 37);
+            this.Button_FormatScout.TabIndex = 2;
+            this.Button_FormatScout.Text = "格式化剧情文本";
+            this.Button_FormatScout.UseVisualStyleBackColor = false;
+            this.Button_FormatScout.Click += new System.EventHandler(this.Button_FormatScout_Click);
+            // 
+            // CheckBox_IsLink
+            // 
+            this.CheckBox_IsLink.AutoSize = true;
+            this.CheckBox_IsLink.Location = new System.Drawing.Point(198, 34);
+            this.CheckBox_IsLink.Name = "CheckBox_IsLink";
+            this.CheckBox_IsLink.Size = new System.Drawing.Size(166, 24);
+            this.CheckBox_IsLink.TabIndex = 3;
+            this.CheckBox_IsLink.Text = "是否放在同一文件内";
+            this.CheckBox_IsLink.UseVisualStyleBackColor = true;
+            // 
             // Advance
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Window;
-            this.ClientSize = new System.Drawing.Size(807, 401);
+            this.ClientSize = new System.Drawing.Size(807, 490);
+            this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
@@ -472,6 +511,8 @@
             this.groupBox4.ResumeLayout(false);
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -514,5 +555,8 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.TextBox textBox9;
         private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Button Button_FormatScout;
+        private System.Windows.Forms.CheckBox CheckBox_IsLink;
     }
 }

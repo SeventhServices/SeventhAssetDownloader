@@ -80,6 +80,19 @@ namespace T7s_Asset_Downloader
 
 
         }
+
+        private void Button_FormatScout_Click(object sender, EventArgs e)
+        {
+            var formatScout = new FormatScout();
+            if (CheckBox_IsLink.Checked)
+            {
+                formatScout.Format(true);
+            }
+            else
+            {
+                formatScout.Format(false);
+            }
+        }
     }
 
     partial class Main
