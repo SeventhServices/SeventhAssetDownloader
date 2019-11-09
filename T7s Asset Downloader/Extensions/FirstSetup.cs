@@ -21,7 +21,7 @@ namespace T7s_Asset_Downloader.Extensions
 
         public string DecryptUUID(string encUUID, string iv)
         {
-            return SaveData.DecryptByTripleDES("ho8s8Q72r72H5dopYJThoScE", iv, encUUID);
+            return SaveData.DecryptByTripleDes("ho8s8Q72r72H5dopYJThoScE", iv, encUUID);
         }
 
         public async Task<int> ParseResultJsonAsync(string path)

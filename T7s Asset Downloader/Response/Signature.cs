@@ -100,7 +100,7 @@ namespace T7s_Asset_Downloader.Response
             return array;
         }
 
-        public static string DecryptByTripleDES(string key, string iv, string encryptedText)
+        public static string DecryptByTripleDes(string key, string iv, string encryptedText)
         {
             using (var tripleDES = TripleDES.Create())
             {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace T7s_Asset_Downloader.Response
@@ -65,7 +66,7 @@ namespace T7s_Asset_Downloader.Response
                 new Param
                 {
                     Key = "platform",
-                    Value = "xiaomi%208"
+                    Value = "xiaomi 8"
                 },
                 new Param
                 {
@@ -121,7 +122,7 @@ namespace T7s_Asset_Downloader.Response
 
             var data = apiName + "?" + SortParam();
 
-            return Signature.EscapeRfc3986(Signature.MakeSignature(sigKey, Uri.UnescapeDataString(data)));
+            return Signature.EscapeRfc3986(Signature.MakeSignature(sigKey, data));
         }
     }
 }
