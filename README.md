@@ -3,6 +3,9 @@
 
 A Downloader For Nanasis/t7s.
 
+## Notice
+This is a develop version and will be refactor.
+
 ## What can it do
 
 * Auto to get all assets list.
