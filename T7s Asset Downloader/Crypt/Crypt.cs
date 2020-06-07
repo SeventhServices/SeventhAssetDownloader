@@ -1,11 +1,11 @@
-﻿using System;
+﻿using LZ4;
+using System;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using LZ4;
 
 namespace T7s_Asset_Downloader.Crypt
 {

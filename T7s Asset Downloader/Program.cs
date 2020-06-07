@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Forms;
-using T7s_Asset_Downloader.Extensions;
 
 namespace T7s_Asset_Downloader
 {
